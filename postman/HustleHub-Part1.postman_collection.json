@@ -6,9 +6,21 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "https://localhost:5443/api", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "testEmail", "value": "postman.tester@example.com", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "testEmail",
+      "value": "postman.tester@example.com",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -16,7 +28,11 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
       },
       "event": [
         {
@@ -35,12 +51,21 @@
       "name": "Register - Success (Freelancer)",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"Thandiwe Nkosi\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"StrongPass1!\",\n  \"role\": \"freelancer\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -64,12 +89,21 @@
       "name": "Register - Fails on Duplicate Email",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"Thandiwe Nkosi\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"StrongPass1!\",\n  \"role\": \"freelancer\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -92,12 +126,21 @@
       "name": "Register - Fails on Invalid Email",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"Bad Email\",\n  \"email\": \"not-an-email\",\n  \"password\": \"StrongPass1!\",\n  \"role\": \"client\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -119,12 +162,21 @@
       "name": "Register - Fails on Weak Password",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"Weak Password\",\n  \"email\": \"weakpassword@example.com\",\n  \"password\": \"abc\",\n  \"role\": \"client\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -145,9 +197,21 @@
       "name": "Register - Fails on Missing Fields",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "body": { "mode": "raw", "raw": "{\n  \"email\": \"missingfields@example.com\"\n}" },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"missingfields@example.com\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -165,12 +229,21 @@
       "name": "Register - Rejects Self-Assigned Admin Role",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"Sneaky Admin\",\n  \"email\": \"sneakyadmin@example.com\",\n  \"password\": \"StrongPass1!\",\n  \"role\": \"admin\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -188,12 +261,21 @@
       "name": "Register - Rejects Script Injection in Name",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"<script>alert(1)</script>\",\n  \"email\": \"xsstest@example.com\",\n  \"password\": \"StrongPass1!\",\n  \"role\": \"client\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register"]
+        }
       },
       "event": [
         {
@@ -211,12 +293,21 @@
       "name": "Login - Success",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"StrongPass1!\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
       },
       "event": [
         {
@@ -240,12 +331,21 @@
       "name": "Login - Fails on Wrong Password",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"TotallyWrongPassword1!\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
       },
       "event": [
         {
@@ -266,12 +366,21 @@
       "name": "Login - Fails on Non-Existent User",
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\n  \"email\": \"doesnotexist@example.com\",\n  \"password\": \"WhateverPassword1!\"\n}"
         },
-        "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
       },
       "event": [
         {
@@ -293,14 +402,20 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+        "url": {
+          "raw": "{{baseUrl}}/users/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "me"]
+        }
       },
       "event": [
         {
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('Status code is 401 without a token', () => pm.response.to.have.status(401));"]
+            "exec": [
+              "pm.test('Status code is 401 without a token', () => pm.response.to.have.status(401));"
+            ]
           }
         }
       ]
@@ -309,15 +424,26 @@
       "name": "Protected Route - GET /users/me (Invalid Token)",
       "request": {
         "method": "GET",
-        "header": [{ "key": "Authorization", "value": "Bearer this.is.not-a-valid-jwt" }],
-        "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer this.is.not-a-valid-jwt"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "me"]
+        }
       },
       "event": [
         {
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('Status code is 401 with a malformed token', () => pm.response.to.have.status(401));"]
+            "exec": [
+              "pm.test('Status code is 401 with a malformed token', () => pm.response.to.have.status(401));"
+            ]
           }
         }
       ]
@@ -326,8 +452,17 @@
       "name": "Protected Route - GET /users/me (Valid Token)",
       "request": {
         "method": "GET",
-        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-        "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["users", "me"]
+        }
       },
       "event": [
         {
@@ -351,7 +486,11 @@
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/this-does-not-exist", "host": ["{{baseUrl}}"], "path": ["this-does-not-exist"] }
+        "url": {
+          "raw": "{{baseUrl}}/this-does-not-exist",
+          "host": ["{{baseUrl}}"],
+          "path": ["this-does-not-exist"]
+        }
       },
       "event": [
         {

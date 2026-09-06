@@ -9,7 +9,12 @@
     "generate-cert": "node scripts/generateCert.js",
     "test": "echo \"Automated backend tests are introduced in Part 2 of the POE\" && exit 0"
   },
-  "keywords": ["hustlehub", "express", "jwt", "security"],
+  "keywords": [
+    "hustlehub",
+    "express",
+    "jwt",
+    "security"
+  ],
   "author": "Evanildo Julio Chaves Jose (ST10437401)",
   "license": "UNLICENSED",
   "dependencies": {
@@ -22,7 +27,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "uuid": "^9.0.1"
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.4",
