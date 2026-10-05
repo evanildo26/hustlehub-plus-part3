@@ -52,16 +52,17 @@ The platform handles credentials, personal data and financial records, so securi
 | Area | Part 1 | Part 2 |
 |---|---|---|
 | Data storage | JSON file (`users.json`) | **MongoDB** via Mongoose: `User`, `Gig`, `Booking`, `Transaction` models with schema validation and indexes |
-| Frontend | None | **React 19** single-page app (Vite) with role-aware pages for all three roles |
+| Frontend | None | **React 19** single-page app (Vite) with a responsive, role-aware design for all three roles |
 | Features | Register, login, `/users/me` | **Gig management**, **browsing/search**, **bookings with simulated payment**, **transactions**, **income summary**, **admin dashboard** |
 | Authorisation | `restrictTo` helper prepared but unused | **RBAC enforced on every route**, plus **ownership checks** (users can't touch resources that aren't theirs) |
 | Validation | express-validator on auth fields | Validation **and sanitisation** on every input; **NoSQL-injection guard**; **mass-assignment allow-lists**; regex-safe search |
 | Rate limiting | One generous limiter on auth | Separate **login** (failed attempts only), **register**, **booking** (per user) and **global** limiters with meaningful `429` responses |
 | Security headers | Helmet defaults | Explicit Helmet config with a **strict CSP** on the API, plus a **CSP for the React app** (strict in production builds) |
 | JWT | HS256 with expiry | Also **pins the algorithm** and enforces **issuer/audience** claims; the role is re-read from the database on each request |
-| Testing | Manual Postman collection | **53 backend tests** (Vitest + Supertest), **Newman** run of a 66-request / 130-assertion collection, **51 frontend tests** (Vitest + Testing Library) |
+| Testing | Manual Postman collection | **54 backend tests** (Vitest + Supertest), **Newman** run of a 66-request / 130-assertion collection, **53 frontend tests** (Vitest + Testing Library) |
 | Logging | Auth events | Adds gig, booking, transaction, access-denied, ownership-violation, NoSQL-injection and rate-limit events |
 | Repo layout | Backend at the root | `api/` (Express) and `client/` (React), ready for one Dockerfile per folder in Part 3 |
+| Demo data | Manual registration | `npm run seed:demo` creates 9 freelancers, **27 gigs** across all 8 categories, 2 clients and sample bookings with real transaction records |
 
 ---
 
@@ -130,7 +131,7 @@ flowchart TB
 ## 4. Features by Role
 
 **Client**
-- Browse the marketplace with keyword search, category filter and pagination.
+- Browse the marketplace from a landing page with keyword search, popular-search shortcuts, **category chips with live gig counts** and pagination.
 - View gig details and **book** with optional notes. Payment is simulated and returns a `SIM-PAY-…` reference and a `TXN-…` transaction reference.
 - **My bookings**: status (confirmed / completed / cancelled), the option to cancel a confirmed booking (which records a refund).
 - **Payments**: read-only history of payments and refunds.
@@ -160,7 +161,7 @@ hustlehub-backend/
 │   ├── scripts/
 │   │   ├── generateCert.js             # Local self-signed TLS certificate
 │   │   ├── seedAdmin.js                # Creates the admin account from .env
-│   │   ├── seedDemo.js                 # Demo freelancer, client and gigs
+│   │   ├── seedDemo.js                 # 9 freelancers, 27 gigs, 2 clients, sample bookings
 │   │   └── runNewman.js                # Runs the Postman collection with Newman (+ HTML/JUnit reports)
 │   ├── src/
 │   │   ├── app.js                      # Middleware order + route wiring
@@ -188,10 +189,10 @@ hustlehub-backend/
 │   └── src/
 │       ├── api/client.js               # Single fetch wrapper (token, safe errors, 401 handling)
 │       ├── context/AuthContext.jsx     # Session state (sessionStorage, re-validated on load)
-│       ├── components/                 # NavBar, ProtectedRoute, GigCard, GigForm, FormField, ...
+│       ├── components/                 # NavBar, Footer, AuthLayout, GigCard, GigForm, StatCard, Avatar, ...
 │       ├── pages/                      # Gigs, GigDetail, Login, Register, MyGigs, GigEditor,
 │       │                               # Bookings, Transactions, Earnings, Admin, NotFound
-│       ├── utils/                      # validation (mirrors API rules) · format (ZAR, dates)
+│       ├── utils/                      # validation (mirrors API rules) · format (ZAR, dates) · categories
 │       └── tests/                      # Vitest + Testing Library component tests
 └── docs/
     ├── screenshots/part1 · part2/
@@ -298,6 +299,7 @@ All errors go through one central handler. Expected errors return their specific
 - **Token storage:** the JWT is held in `sessionStorage` (cleared when the browser closes, not shared between tabs) and sent only as a `Bearer` header with `credentials: 'omit'`. Because no cookies are used, there is no CSRF exposure. The trade-off is that page scripts can read `sessionStorage`; this is mitigated by the strict CSP, React's escaping, server-side sanitisation and the one-hour expiry. On load, the stored token is re-validated with `/api/users/me`, and any `401` logs the user out with a "session expired" message.
 - **Graceful invalid input:** every form validates client-side first (mirroring the API rules), shows field-level messages with `aria-invalid`, then also displays any server-side field errors next to the right input.
 - **No sensitive data in the UI:** no hashes, tokens or stack traces are ever shown. Public pages show only freelancer names, never emails.
+- **CSP-friendly design:** the interface uses self-hosted fonts (`@fontsource`) and bundled SVG icons (`lucide-react`) instead of Google Fonts or icon CDNs. Every asset is served from the app's own origin, so the strict `font-src 'self'` / `img-src 'self'` policy holds with no exceptions. Freelancer avatars are generated initials, so no user-uploaded images need to be loaded or sanitised.
 
 ### 6.8 Logging
 
@@ -334,7 +336,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"   # pas
 
 npm run generate-cert     # one-time: self-signed HTTPS certificate in api/certs
 npm run seed:admin        # creates the admin account from ADMIN_EMAIL / ADMIN_PASSWORD
-npm run seed:demo         # optional: demo freelancer, client and gigs
+npm run seed:demo         # optional: 9 freelancers, 27 gigs, 2 clients and sample bookings
 npm start                 # https://localhost:5000
 ```
 
@@ -354,8 +356,9 @@ Open **https://localhost:5173**. Both servers use a self-signed certificate, so 
 
 | Role | Email | Password |
 |---|---|---|
-| Freelancer | `thandiwe@demo.hustlehub.local` | `DemoPass1!` |
-| Client | `sipho@demo.hustlehub.local` | `DemoPass1!` |
+| Freelancer (with sample bookings and earnings) | `thandiwe@demo.hustlehub.local` | `DemoPass1!` |
+| Client (with sample bookings and payments) | `sipho@demo.hustlehub.local` | `DemoPass1!` |
+| Other demo freelancers / client | `kagiso@`, `naledi@`, `zanele@`, `pieter@`, `rashid@`, `anika@`, `thabo@`, `lindiwe@`, `amahle@` + `demo.hustlehub.local` | `DemoPass1!` |
 | Admin | value of `ADMIN_EMAIL` in `.env` | value of `ADMIN_PASSWORD` in `.env` |
 
 > Demo credentials are for local development only. Tip: avoid `#` in `.env` values (dotenv treats it as a comment) or wrap the value in quotes.
@@ -373,6 +376,7 @@ All responses are JSON: `{ "success": boolean, "message"?: string, "data"?: ...,
 | POST | `/api/auth/login` | — | Log in, returns JWT (failed attempts rate limited) |
 | GET | `/api/users/me` | JWT | Own profile |
 | GET | `/api/gigs?search=&category=&minPrice=&maxPrice=&page=&limit=` | — | Browse active gigs |
+| GET | `/api/gigs/categories` | — | Active gig count per category |
 | GET | `/api/gigs/:id` | — (owner sees own inactive gig) | Gig details |
 | GET | `/api/gigs/mine` | Freelancer | Own gigs incl. unlisted |
 | POST | `/api/gigs` | Freelancer | Create gig |
@@ -414,9 +418,9 @@ Content-Type: application/json
 
 | Suite | Tool | Command | Result |
 |---|---|---|---|
-| Backend integration tests | Vitest + Supertest (separate `hustlehub_test` DB) | `cd api && npm test` | **53 passed** |
+| Backend integration tests | Vitest + Supertest (separate `hustlehub_test` DB) | `cd api && npm test` | **54 passed** |
 | API endpoint tests | Postman collection run by **Newman** | `cd api && npm run test:api` (API running + admin seeded) | **66 requests, 130 assertions, 0 failed** |
-| Frontend component tests | Vitest + React Testing Library + user-event | `cd client && npm test` | **51 passed** |
+| Frontend component tests | Vitest + React Testing Library + user-event | `cd client && npm test` | **53 passed** |
 
 Evidence: [Newman HTML report](docs/evidence/newman-report.html) · [Newman CLI output](docs/evidence/newman-cli-output.txt) · [backend test output](docs/evidence/backend-tests-output.txt) · [frontend test output](docs/evidence/frontend-tests-output.txt)
 
@@ -452,7 +456,7 @@ Each test renders a real component and drives it the way a user would, with `@te
 - **RegisterPage**: only client/freelancer roles offered; live password checklist; mismatched passwords blocked; `confirmPassword` never sent; server field errors shown next to the right input.
 - **GigCard**: renders title, ZAR price, category and freelancer; markup in data rendered as text (no `<img>` created).
 - **ProtectedRoute**: redirects anonymous users, shows "Access denied" for the wrong role, renders for the right role.
-- **GigsPage**: loads gigs; search sends the term and category; empty and error states.
+- **GigsPage**: loads gigs; search sends the term and category; category chips show live counts and filter results; popular-search pills; empty and error states.
 - **GigDetailPage**: client booking shows `SIM-PAY` and `TXN` references; markup in notes blocked before the API call; booking 429 message shown; anonymous and freelancer users can't book.
 - **NavBar**: role-specific links; logout returns to login.
 - **validation**: unit tests for every client-side rule.
