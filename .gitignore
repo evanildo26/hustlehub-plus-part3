@@ -3,22 +3,29 @@ node_modules/
 
 # Environment variables (never commit real secrets)
 .env
+.env.local
 
 # Locally generated TLS certificate/key (regenerate per machine)
 certs/
 
-# Runtime data
-src/data/users.json
+# Runtime data (Part 1 file store - superseded by MongoDB in Part 2)
+api/src/data/users.json
 
 # Logs
-src/logs/*.log
-!src/logs/.gitkeep
+api/src/logs/*.log
+!api/src/logs/.gitkeep
+*.log
+
+# Test / build output
+coverage/
+client/dist/
+api/postman/reports/*
+!api/postman/reports/.gitkeep
 
 # OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
-*.log
 
 # Local AI assistant tooling config (machine-specific, not part of the submission)
 .claude/
