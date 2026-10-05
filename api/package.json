@@ -26,12 +26,17 @@
     "express-validator": "^7.2.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0",
-    "uuid": "^14.0.2"
+    "mongoose": "^9.11.0",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
+    "jest": "^30.5.2",
+    "newman": "^6.2.2",
+    "newman-reporter-htmlextra": "^1.23.1",
     "nodemon": "^3.1.4",
-    "selfsigned": "^2.4.1"
+    "selfsigned": "^2.4.1",
+    "supertest": "^7.3.1"
   },
   "engines": {
     "node": ">=18.0.0"
