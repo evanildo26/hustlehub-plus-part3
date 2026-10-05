@@ -83,6 +83,7 @@ export const api = {
 
   // Gigs
   listGigs: (params) => apiRequest(`/gigs${query(params)}`),
+  categories: () => apiRequest('/gigs/categories'),
   getGig: (id) => apiRequest(`/gigs/${encodeURIComponent(id)}`),
   myGigs: () => apiRequest('/gigs/mine'),
   createGig: (data) => apiRequest('/gigs', { method: 'POST', body: data }),

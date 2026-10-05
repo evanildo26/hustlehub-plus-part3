@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import NavBar from './components/NavBar';
+import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import GigsPage from './pages/GigsPage';
 import GigDetailPage from './pages/GigDetailPage';
@@ -41,7 +42,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      <footer className="footer">HustleHub+ · Secure freelance marketplace · INSY7314 / APDS7311 POE</footer>
+      <Footer />
     </>
   );
 }
