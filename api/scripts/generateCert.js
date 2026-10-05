@@ -31,6 +31,7 @@ const attrs = [{ name: 'commonName', value: 'localhost' }]; // The certificate's
 const pems = selfsigned.generate(attrs, {
   days: 365, // How long the certificate is valid for (1 year) before it needs regenerating.
   keySize: 2048, // RSA key length in bits - 2048 is the current minimum considered secure.
+  algorithm: 'sha256', // Signature hash. The library default (SHA-1) is broken and rejected by modern browsers (ERR_CERT_INVALID).
   extensions: [
     { name: 'basicConstraints', cA: true }, // Marks this certificate as allowed to act as its own Certificate Authority (since it's self-signed).
     {
@@ -44,7 +45,10 @@ const pems = selfsigned.generate(attrs, {
     { name: 'extKeyUsage', serverAuth: true }, // Marks the certificate as valid specifically for authenticating a TLS server.
     {
       name: 'subjectAltName', // Modern browsers require this (not just commonName) to trust a certificate for a given hostname.
-      altNames: [{ type: 2, value: 'localhost' }], // type: 2 = DNS name; tells the client "this cert is valid for the host 'localhost'".
+      altNames: [
+        { type: 2, value: 'localhost' }, // type: 2 = DNS name; tells the client "this cert is valid for the host 'localhost'".
+        { type: 7, ip: '127.0.0.1' }, // type: 7 = IP address; also valid when browsing to https://127.0.0.1.
+      ],
     },
   ],
 });
