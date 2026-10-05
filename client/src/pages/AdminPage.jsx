@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import ConfirmButton from '../components/ConfirmButton';
+import { CalendarCheck, LayoutGrid, Users, Wallet } from 'lucide-react';
 import { Alert, Loader } from '../components/Feedback';
+import StatCard from '../components/StatCard';
 import { capitalise, formatCurrency, formatDate } from '../utils/format';
 
 /** Admin oversight: platform stats, user list and gig moderation. */
@@ -45,26 +47,21 @@ export default function AdminPage() {
       <Alert type="success">{notice}</Alert>
 
       <div className="stats">
-        <div className="stat card">
-          <p className="stat__label">Users</p>
-          <p className="stat__value">{stats.users.client + stats.users.freelancer + stats.users.admin}</p>
-          <p className="stat__hint">
-            {stats.users.client} clients · {stats.users.freelancer} freelancers · {stats.users.admin} admins
-          </p>
-        </div>
-        <div className="stat card">
-          <p className="stat__label">Gigs</p>
-          <p className="stat__value">{stats.gigs}</p>
-        </div>
-        <div className="stat card">
-          <p className="stat__label">Bookings</p>
-          <p className="stat__value">{stats.bookings}</p>
-        </div>
-        <div className="stat card stat--primary">
-          <p className="stat__label">Platform revenue</p>
-          <p className="stat__value">{formatCurrency(stats.platformRevenue)}</p>
-          <p className="stat__hint">from {formatCurrency(stats.transactionVolume)} transaction volume</p>
-        </div>
+        <StatCard
+          icon={Users}
+          label="Users"
+          value={stats.users.client + stats.users.freelancer + stats.users.admin}
+          hint={`${stats.users.client} clients · ${stats.users.freelancer} freelancers · ${stats.users.admin} admins`}
+        />
+        <StatCard icon={LayoutGrid} label="Gigs" value={stats.gigs} hint="Listed and unlisted" />
+        <StatCard icon={CalendarCheck} label="Bookings" value={stats.bookings} hint="All time" />
+        <StatCard
+          icon={Wallet}
+          label="Platform revenue"
+          value={formatCurrency(stats.platformRevenue)}
+          hint={`from ${formatCurrency(stats.transactionVolume)} transaction volume`}
+          tone="primary"
+        />
       </div>
 
       <div className="card">

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { api } from '../api/client';
 import ConfirmButton from '../components/ConfirmButton';
 import { Alert, EmptyState, Loader } from '../components/Feedback';
@@ -49,7 +50,8 @@ export default function MyGigsPage() {
           <p className="muted">Create and manage the services you offer.</p>
         </div>
         <Link to="/my-gigs/new" className="btn btn--primary">
-          + New gig
+          <Plus size={18} aria-hidden="true" />
+          New gig
         </Link>
       </div>
       <Alert>{error}</Alert>

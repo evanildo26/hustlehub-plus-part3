@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { CalendarCheck, Percent, TrendingUp, Wallet } from 'lucide-react';
 import { Alert, EmptyState, Loader } from '../components/Feedback';
+import StatCard from '../components/StatCard';
 import { formatCurrency, formatMonth } from '../utils/format';
 
 /**
@@ -23,10 +25,11 @@ export default function EarningsPage() {
   if (!summary) return <Loader label="Calculating your earnings…" />;
 
   const tiles = [
-    { label: 'Net income', value: formatCurrency(summary.netIncome), hint: 'What you keep after the 10% platform fee', primary: true },
-    { label: 'Gross bookings', value: formatCurrency(summary.grossIncome), hint: 'Total paid by clients, net of refunds' },
-    { label: 'Platform fees', value: formatCurrency(summary.platformFees), hint: '10% of each booking' },
+    { icon: Wallet, label: 'Net income', value: formatCurrency(summary.netIncome), hint: 'What you keep after the 10% platform fee', tone: 'primary' },
+    { icon: TrendingUp, label: 'Gross bookings', value: formatCurrency(summary.grossIncome), hint: 'Total paid by clients, net of refunds' },
+    { icon: Percent, label: 'Platform fees', value: formatCurrency(summary.platformFees), hint: '10% of each booking' },
     {
+      icon: CalendarCheck,
       label: 'Bookings',
       value: summary.bookings.confirmed + summary.bookings.completed + summary.bookings.cancelled,
       hint: `${summary.bookings.confirmed} in progress · ${summary.bookings.completed} completed · ${summary.bookings.cancelled} cancelled`,
@@ -40,11 +43,7 @@ export default function EarningsPage() {
 
       <div className="stats">
         {tiles.map((t) => (
-          <div key={t.label} className={`stat card${t.primary ? ' stat--primary' : ''}`}>
-            <p className="stat__label">{t.label}</p>
-            <p className="stat__value">{t.value}</p>
-            <p className="stat__hint">{t.hint}</p>
-          </div>
+          <StatCard key={t.label} {...t} />
         ))}
       </div>
 
