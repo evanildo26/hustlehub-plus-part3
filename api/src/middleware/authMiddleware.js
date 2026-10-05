@@ -79,4 +79,23 @@ function restrictTo(...allowedRoles) {
   };
 }
 
-module.exports = { protect, restrictTo }; // Export both so routes can compose them, e.g. router.post('/gigs', protect, restrictTo('freelancer'), ...).
+/**
+ * For PUBLIC routes that behave slightly differently for a logged-in user
+ * (e.g. an owner can view their own inactive gig). A valid token attaches
+ * req.user; a missing or invalid token simply means "anonymous" - it never
+ * blocks the request, because the route is public anyway.
+ */
+async function optionalAuth(req, res, next) {
+  const [scheme, token] = (req.headers.authorization || '').split(' ');
+  if (scheme !== 'Bearer' || !token) return next();
+  try {
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.id).lean();
+    if (user) req.user = { id: user._id.toString(), role: user.role, email: user.email, name: user.name };
+  } catch {
+    // Invalid/expired token on a public route: continue as anonymous.
+  }
+  return next();
+}
+
+module.exports = { protect, restrictTo, optionalAuth }; // Export both so routes can compose them, e.g. router.post('/gigs', protect, restrictTo('freelancer'), ...).
