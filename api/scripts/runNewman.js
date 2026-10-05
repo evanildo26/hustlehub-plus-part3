@@ -35,6 +35,11 @@ newman.run(
         export: path.join(REPORT_DIR, 'newman-report.html'),
         title: 'HustleHub+ API - Newman Test Report',
         browserTitle: 'HustleHub+ Newman Report',
+        // The report is committed as evidence, so keep secrets out of it: the admin
+        // credentials (injected from .env) and every Bearer token are omitted.
+        hideRequestBody: ['Login admin (seeded)'],
+        hideResponseBody: ['Login admin (seeded)'],
+        skipHeaders: 'Authorization',
       },
       junit: { export: path.join(REPORT_DIR, 'newman-junit.xml') },
     },
