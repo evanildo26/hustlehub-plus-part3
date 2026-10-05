@@ -1,0 +1,60 @@
+
+ RUN  v4.1.11 C:/Users/emeris/Documents/Assignmts/hustlehub-backend/client
+
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > redirects anonymous visitors to the login page 81ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > shows access denied to a logged-in user with the wrong role 306ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > renders the page for an allowed role 9ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > shows a loader while the session is being checked 22ms
+ ✓ src/tests/GigCard.test.jsx > GigCard > renders the gig title, price, category and freelancer 420ms
+ ✓ src/tests/GigCard.test.jsx > GigCard > renders markup in data as plain text, never as HTML (XSS) 15ms
+ ✓ src/tests/GigCard.test.jsx > GigCard > truncates long descriptions 10ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > anonymous visitors see browse, log in and sign up 421ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > freelancers see gig and earnings links but not admin 73ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > renders the login form 416ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > only offers client and freelancer roles (no admin) 443ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > clients do not see freelancer or admin links 37ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > log out clears the session and returns to the login page 87ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows validation errors and does not call the API when fields are empty 108ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > loads and displays gigs from the API 461ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > password checklist updates as the user types 313ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > searching sends the search term and category to the API 359ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > shows an empty state when nothing matches 25ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > shows a friendly error if the API cannot be reached 32ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > a client books the gig and sees the simulated payment confirmation 848ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > blocks notes containing markup before calling the API 264ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > shows the booking rate-limit message from the API 93ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > anonymous visitors are asked to log in instead of booking 28ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > freelancers cannot book; owners get an edit link 35ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > logs in with a trimmed email and redirects a freelancer to their gigs 732ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows the API's generic error and clears the password on failure 615ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > blocks submission when passwords do not match 1182ms
+ ✓ src/tests/validation.test.js > validateRegister > accepts a valid registration 2ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects script tags in the name 1ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects the admin role (cannot self-register) 0ms
+ ✓ src/tests/validation.test.js > validateRegister > requires matching passwords 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password short1! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password alllowercase1! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password ALLUPPERCASE1! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password NoNumbers!! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password NoSymbols123 0ms
+ ✓ src/tests/validation.test.js > PASSWORD_RULES > every rule passes for a strong password 0ms
+ ✓ src/tests/validation.test.js > validateLogin > requires a valid email and a password 0ms
+ ✓ src/tests/validation.test.js > validateGig > accepts a valid gig 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags title for { title: 'abc' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags title for { title: 'Logo <b>bold</b> design' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags description for { description: 'too short' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags category for { category: 'hacking' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags price for { price: '10' } 20ms
+ ✓ src/tests/validation.test.js > validateGig > flags price for { price: '100.555' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags deliveryDays for { deliveryDays: '0' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags deliveryDays for { deliveryDays: '2.5' } 0ms
+ ✓ src/tests/validation.test.js > validateBookingNotes > limits length and blocks markup 1ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows the rate-limit message when too many attempts are made 626ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > registers a freelancer without sending confirmPassword, then goes to login 1177ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > shows server-side field errors next to the right input 1153ms
+
+ Test Files  8 passed (8)
+      Tests  51 passed (51)
+   Start at  20:04:46
+   Duration  7.18s (transform 804ms, setup 3.42s, import 2.36s, tests 10.46s, environment 13.25s)
+

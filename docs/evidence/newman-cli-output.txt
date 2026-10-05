@@ -1,0 +1,364 @@
+
+> hustlehub-backend@2.0.0 test:api
+> node scripts/runNewman.js
+
+newman
+
+HustleHub+ API - Part 2
+
+□ 0. Setup - accounts and tokens
+└ Health check
+  GET https://localhost:5443/api/health [200 OK, 836B, 44ms]
+  √  Status is 200
+  √  API reports healthy
+
+└ Register freelancer
+  POST https://localhost:5443/api/auth/register [201 Created, 1.12kB, 342ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is freelancer
+
+└ Register second freelancer
+  POST https://localhost:5443/api/auth/register [201 Created, 1.12kB, 334ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is freelancer
+
+└ Register client
+  POST https://localhost:5443/api/auth/register [201 Created, 1.11kB, 334ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is client
+
+└ Register second client (outsider)
+  POST https://localhost:5443/api/auth/register [201 Created, 1.11kB, 329ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is client
+
+└ Login freelancer
+  POST https://localhost:5443/api/auth/login [200 OK, 1.41kB, 352ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login second freelancer
+  POST https://localhost:5443/api/auth/login [200 OK, 1.42kB, 369ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login client
+  POST https://localhost:5443/api/auth/login [200 OK, 1.39kB, 331ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login second client
+  POST https://localhost:5443/api/auth/login [200 OK, 1.39kB, 353ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login admin (seeded)
+  POST https://localhost:5443/api/auth/login [200 OK, 1.37kB, 329ms]
+  √  Status is 200
+  √  Role is admin
+
+□ 1. Authentication - invalid scenarios
+└ Register duplicate email -> 409
+  POST https://localhost:5443/api/auth/register [409 Conflict, 899B, 9ms]
+  √  Status is 409
+  √  Error uses the standard safe shape
+
+└ Register weak password -> 400
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 974B, 4ms]
+  √  Status is 400
+  √  Reports a validation error on "password"
+
+└ Register self-assigned admin -> 400
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 958B, 4ms]
+  √  Status is 400
+  √  Reports a validation error on "role"
+
+└ Register with extra isAdmin field -> 400
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 947B, 4ms]
+  √  Status is 400
+  √  Reports a validation error on "isAdmin"
+
+└ Register script in name -> 400
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 981B, 4ms]
+  √  Status is 400
+  √  Reports a validation error on "name"
+
+└ Login with NoSQL operator -> 400
+  POST https://localhost:5443/api/auth/login [400 Bad Request, 993B, 4ms]
+  √  Status is 400
+  √  No token issued
+
+└ Login wrong password -> 401
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 887B, 328ms]
+  √  Status is 401
+
+└ Login unknown user -> 401 (same message)
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 887B, 326ms]
+  √  Status is 401
+  √  Message identical to wrong-password case (no account enumeration)
+
+└ Profile without token -> 401
+  GET https://localhost:5443/api/users/me [401 Unauthorized, 925B, 3ms]
+  √  Status is 401
+  √  Error uses the standard safe shape
+
+└ Profile with tampered token -> 401
+  GET https://localhost:5443/api/users/me [401 Unauthorized, 912B, 3ms]
+  √  Status is 401
+
+└ Profile with valid token -> 200
+  GET https://localhost:5443/api/users/me [200 OK, 1.04kB, 6ms]
+  √  Status is 200
+  √  Returns own profile
+
+□ 2. Gigs - management, RBAC and ownership
+└ Freelancer creates gig -> 201
+  POST https://localhost:5443/api/gigs [201 Created, 1.25kB, 6ms]
+  √  Status is 201
+  √  Owner is the logged-in freelancer
+
+└ Create gig with HTML -> tags stripped
+  POST https://localhost:5443/api/gigs [201 Created, 1.21kB, 8ms]
+  √  Status is 201
+  √  No markup stored
+
+└ Client creates gig -> 403
+  POST https://localhost:5443/api/gigs [403 Forbidden, 911B, 5ms]
+  √  Status is 403
+  √  Error uses the standard safe shape
+
+└ Anonymous creates gig -> 401
+  POST https://localhost:5443/api/gigs [401 Unauthorized, 925B, 3ms]
+  √  Status is 401
+
+└ Create gig with invalid price -> 400
+  POST https://localhost:5443/api/gigs [400 Bad Request, 967B, 5ms]
+  √  Status is 400
+  √  Reports a validation error on "price"
+
+└ Create gig for another owner -> 400
+  POST https://localhost:5443/api/gigs [400 Bad Request, 953B, 5ms]
+  √  Status is 400
+  √  Reports a validation error on "freelancer"
+
+└ Browse gigs (public) -> 200
+  GET https://localhost:5443/api/gigs?limit=50 [200 OK, 3.34kB, 9ms]
+  √  Status is 200
+  √  New gig is listed
+  √  Freelancer emails are not exposed
+
+└ Search gigs with regex characters -> literal match
+  GET https://localhost:5443/api/gigs?search=.* [200 OK, 905B, 6ms]
+  √  Status is 200
+  √  ".*" is not treated as a wildcard
+
+└ Get gig by id -> 200
+  GET https://localhost:5443/api/gigs/6ac3e68a193e503645086d93 [200 OK, 1.23kB, 6ms]
+  √  Status is 200
+
+└ Get gig with invalid id -> 400
+  GET https://localhost:5443/api/gigs/not-a-valid-id [400 Bad Request, 929B, 3ms]
+  √  Status is 400
+  √  Reports a validation error on "id"
+
+└ Other freelancer edits gig -> 403
+  PATCH https://localhost:5443/api/gigs/6ac3e68a193e503645086d93 [403 Forbidden, 895B, 7ms]
+  √  Status is 403
+  √  Error uses the standard safe shape
+
+└ Other freelancer deletes gig -> 403
+  DELETE https://localhost:5443/api/gigs/6ac3e68a193e503645086d93 [403 Forbidden, 895B, 7ms]
+  √  Status is 403
+
+└ Owner edits gig -> 200
+  PATCH https://localhost:5443/api/gigs/6ac3e68a193e503645086d93 [200 OK, 1.24kB, 8ms]
+  √  Status is 200
+  √  Update applied
+
+└ Owner deletes own gig -> 200
+  DELETE https://localhost:5443/api/gigs/6ac3e68b193e503645086d94 [200 OK, 878B, 16ms]
+  √  Status is 200
+
+└ Freelancer lists own gigs -> 200
+  GET https://localhost:5443/api/gigs/mine [200 OK, 1.2kB, 6ms]
+  √  Status is 200
+  √  Only own gigs returned
+
+□ 3. Bookings - simulated payment and access control
+└ Client books gig -> 201 + transaction
+  POST https://localhost:5443/api/bookings [201 Created, 1.8kB, 56ms]
+  √  Status is 201
+  √  Booking confirmed with simulated payment reference
+  √  Amount comes from the gig price
+  √  Payment transaction recorded with 10% fee
+
+└ Freelancer books gig -> 403
+  POST https://localhost:5443/api/bookings [403 Forbidden, 911B, 6ms]
+  √  Status is 403
+
+└ Client sets own amount -> 400
+  POST https://localhost:5443/api/bookings [400 Bad Request, 947B, 5ms]
+  √  Status is 400
+  √  Reports a validation error on "amount"
+
+└ Book with invalid gig id -> 400
+  POST https://localhost:5443/api/bookings [400 Bad Request, 945B, 5ms]
+  √  Status is 400
+  √  Reports a validation error on "gigId"
+
+└ Outsider views booking -> 403
+  GET https://localhost:5443/api/bookings/6ac3e68c193e503645086d95 [403 Forbidden, 900B, 8ms]
+  √  Status is 403
+
+└ Client lists own bookings -> 200
+  GET https://localhost:5443/api/bookings [200 OK, 1.3kB, 8ms]
+  √  Status is 200
+  √  Contains the new booking
+
+└ Freelancer views bookings on their gigs -> 200
+  GET https://localhost:5443/api/bookings [200 OK, 1.3kB, 9ms]
+  √  Status is 200
+  √  Freelancer sees the booking
+
+└ Outsider lists bookings -> empty
+  GET https://localhost:5443/api/bookings [200 OK, 850B, 6ms]
+  √  Status is 200
+  √  No bookings leak to other clients
+
+└ Delete gig with confirmed booking -> 409
+  DELETE https://localhost:5443/api/gigs/6ac3e68a193e503645086d93 [409 Conflict, 955B, 9ms]
+  √  Status is 409
+
+└ Client completes booking -> 403
+  PATCH https://localhost:5443/api/bookings/6ac3e68c193e503645086d95/complete [403 Forbidden, 911B, 5ms]
+  √  Status is 403
+
+└ Freelancer completes booking -> 200
+  PATCH https://localhost:5443/api/bookings/6ac3e68c193e503645086d95/complete [200 OK, 1.38kB, 10ms]
+  √  Status is 200
+  √  Status is completed
+
+└ Cancel completed booking -> 409
+  PATCH https://localhost:5443/api/bookings/6ac3e68c193e503645086d95/cancel [409 Conflict, 900B, 8ms]
+  √  Status is 409
+
+└ Client books gig again -> 201
+  POST https://localhost:5443/api/bookings [201 Created, 1.76kB, 9ms]
+  √  Status is 201
+
+└ Client cancels booking -> 200 + refund
+  PATCH https://localhost:5443/api/bookings/6ac3e68d193e503645086d97/cancel [200 OK, 1.93kB, 15ms]
+  √  Status is 200
+  √  Booking cancelled by client
+  √  Refund transaction reverses the payment
+
+□ 4. Transactions and income tracking
+└ Client transactions -> 2 payments + 1 refund
+  GET https://localhost:5443/api/transactions [200 OK, 2.38kB, 7ms]
+  √  Status is 200
+  √  Three records for this client
+  √  All belong to the client
+
+└ Outsider transactions -> empty
+  GET https://localhost:5443/api/transactions [200 OK, 850B, 6ms]
+  √  Status is 200
+  √  No transactions leak
+
+└ Freelancer income summary -> net of refund
+  GET https://localhost:5443/api/income/summary [200 OK, 1.2kB, 13ms]
+  √  Status is 200
+  √  Gross R1000 after one refund
+  √  Net R900 after 10% platform fee
+  √  Booking counts tracked
+  √  Monthly breakdown present
+
+└ Other freelancer income -> zero
+  GET https://localhost:5443/api/income/summary [200 OK, 1.02kB, 11ms]
+  √  Status is 200
+  √  Income is attributed to the correct freelancer only
+
+└ Client income summary -> 403
+  GET https://localhost:5443/api/income/summary [403 Forbidden, 911B, 6ms]
+  √  Status is 403
+
+□ 5. Admin capabilities
+└ Client lists users -> 403
+  GET https://localhost:5443/api/admin/users [403 Forbidden, 911B, 5ms]
+  √  Status is 403
+
+└ Freelancer views stats -> 403
+  GET https://localhost:5443/api/admin/stats [403 Forbidden, 911B, 5ms]
+  √  Status is 403
+
+└ Admin lists users -> 200 (no hashes)
+  GET https://localhost:5443/api/admin/users [200 OK, 2.21kB, 7ms]
+  √  Status is 200
+  √  No password hashes in response
+
+└ Admin views platform stats -> 200
+  GET https://localhost:5443/api/admin/stats [200 OK, 965B, 7ms]
+  √  Status is 200
+  √  Stats include bookings and revenue
+
+└ Second freelancer creates gig -> 201
+  POST https://localhost:5443/api/gigs [201 Created, 1.24kB, 13ms]
+  √  Status is 201
+
+└ Admin removes any gig (moderation) -> 200
+  DELETE https://localhost:5443/api/gigs/6ac3e68e193e503645086d9a [200 OK, 878B, 9ms]
+  √  Status is 200
+
+└ Admin cannot book gigs -> 403
+  POST https://localhost:5443/api/bookings [403 Forbidden, 911B, 5ms]
+  √  Status is 403
+
+□ 6. Security controls
+└ Security headers present
+  GET https://localhost:5443/api/health [200 OK, 836B, 3ms]
+  √  Status is 200
+  √  Content-Security-Policy is strict
+  √  HSTS enabled
+  √  Clickjacking protection
+  √  MIME sniffing disabled
+  √  Rate limit headers advertised
+  √  Framework not disclosed
+
+└ Data responses are not cached
+  GET https://localhost:5443/api/gigs [200 OK, 2.99kB, 6ms]
+  √  Cache-Control: no-store
+
+└ Unknown route -> safe 404
+  GET https://localhost:5443/api/does-not-exist [404 Not Found, 901B, 3ms]
+  √  Status is 404
+  √  Error uses the standard safe shape
+
+└ Malformed JSON -> 400
+  POST https://localhost:5443/api/auth/login [400 Bad Request, 852B, 4ms]
+  √  Status is 400
+  √  Error uses the standard safe shape
+
+┌─────────────────────────┬───────────────────┬───────────────────┐
+│                         │          executed │            failed │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              iterations │                 1 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│                requests │                66 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│            test-scripts │                66 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│      prerequest-scripts │                 2 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              assertions │               130 │                 0 │
+├─────────────────────────┴───────────────────┴───────────────────┤
+│ total run duration: 9.5s                                        │
+├─────────────────────────────────────────────────────────────────┤
+│ total data received: 22.6kB (approx)                            │
+├─────────────────────────────────────────────────────────────────┤
+│ average response time: 63ms [min: 3ms, max: 369ms, s.d.: 123ms] │
+└─────────────────────────────────────────────────────────────────┘
+
+Reports written to postman\reports
