@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormField from '../components/FormField';
 import { Alert } from '../components/Feedback';
+import AuthLayout from '../components/AuthLayout';
 import { PASSWORD_RULES, hasErrors, validateRegister } from '../utils/validation';
 
 export default function RegisterPage() {
@@ -42,10 +43,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <section className="page page--narrow">
-      <h1>Create your account</h1>
-      <p className="muted">Book talented freelancers, or start selling your own services.</p>
-      <form className="form card" onSubmit={handleSubmit} noValidate>
+    <AuthLayout
+      title="Create your account"
+      subtitle="Book talented freelancers, or start selling your own services."
+      footer={
+        <>
+          Already have an account? <Link to="/login">Log in</Link>
+        </>
+      }
+    >
+      <form className="form" onSubmit={handleSubmit} noValidate>
         <Alert>{formError}</Alert>
 
         <fieldset className="role-picker">
@@ -99,9 +106,6 @@ export default function RegisterPage() {
           {submitting ? 'Creating account…' : 'Create account'}
         </button>
       </form>
-      <p className="muted center">
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
-    </section>
+    </AuthLayout>
   );
 }

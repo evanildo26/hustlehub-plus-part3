@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import FormField from '../components/FormField';
 import { Alert } from '../components/Feedback';
+import AuthLayout from '../components/AuthLayout';
 import { hasErrors, validateLogin } from '../utils/validation';
 
 const HOME_BY_ROLE = { client: '/', freelancer: '/my-gigs', admin: '/admin' };
@@ -45,12 +46,18 @@ export default function LoginPage() {
   };
 
   return (
-    <section className="page page--narrow">
-      <h1>Log in</h1>
-      <p className="muted">Welcome back to HustleHub+.</p>
+    <AuthLayout
+      title="Log in"
+      subtitle="Welcome back to HustleHub+."
+      footer={
+        <>
+          New to HustleHub+? <Link to="/register">Create an account</Link>
+        </>
+      }
+    >
       {sessionExpired && <Alert type="info">Your session has expired. Please log in again.</Alert>}
       {location.state?.registered && <Alert type="success">Account created successfully. You can now log in.</Alert>}
-      <form className="form card" onSubmit={handleSubmit} noValidate>
+      <form className="form" onSubmit={handleSubmit} noValidate>
         <Alert>{formError}</Alert>
         <FormField id="email" type="email" label="Email" autoComplete="email" value={values.email} onChange={update('email')} error={errors.email} />
         <FormField
@@ -66,9 +73,6 @@ export default function LoginPage() {
           {submitting ? 'Logging in…' : 'Log in'}
         </button>
       </form>
-      <p className="muted center">
-        New to HustleHub+? <Link to="/register">Create an account</Link>
-      </p>
-    </section>
+    </AuthLayout>
   );
 }
