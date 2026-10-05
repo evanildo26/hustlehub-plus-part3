@@ -21,21 +21,38 @@ function notFound(req, res, next) {
   next(new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404)); // Hand a controlled 404 error to errorHandler below.
 }
 
+/**
+ * Translates well-known library errors into safe operational AppErrors, so
+ * the client gets a useful 4xx instead of a generic 500 - without ever
+ * seeing the raw library message (which can contain schema/field internals).
+ */
+function normaliseKnownErrors(err) {
+  if (err.type === 'entity.parse.failed') return new AppError('Request body must be valid JSON.', 400); // body-parser: malformed JSON.
+  if (err.type === 'entity.too.large') return new AppError('Request body is too large.', 413); // body-parser: over the 10kb limit.
+  if (err.name === 'CastError') return new AppError('Invalid identifier or value supplied.', 400); // Mongoose: e.g. a malformed ObjectId.
+  if (err.name === 'ValidationError') return new AppError('Submitted data failed validation.', 400); // Mongoose schema validation.
+  if (err.code === 11000) return new AppError('A record with these details already exists.', 409); // MongoDB duplicate key.
+  return err;
+}
+
 // eslint-disable-next-line no-unused-vars
-function errorHandler(err, req, res, next) {
+function errorHandler(rawErr, req, res, next) {
   // Express recognises this as an ERROR-HANDLING middleware specifically because it takes 4 arguments (err first).
+  const err = normaliseKnownErrors(rawErr);
   const statusCode = err.statusCode && Number.isInteger(err.statusCode) ? err.statusCode : 500;
   // Use the error's own status code if it set one validly (AppError does); otherwise default to 500 Internal Server Error.
   const isOperational = err.isOperational === true; // True only for errors we deliberately threw as AppError.
 
   // Full detail (message + stack) is always logged server-side for
   // debugging/auditing, never discarded.
-  logger.error('REQUEST_ERROR', {
+  const logFn = statusCode >= 500 ? logger.error : logger.warn; // 4xx = client mistakes (warn); 5xx = our bugs (error).
+  logFn('REQUEST_ERROR', {
     method: req.method, // e.g. 'POST'.
     path: req.originalUrl, // The URL that was requested.
     statusCode, // The status code being returned.
-    message: err.message, // The error's message (safe or not - this log is server-side only).
-    stack: err.stack, // Full stack trace - invaluable for debugging, but NEVER sent in the HTTP response.
+    userId: req.user && req.user.id, // Who made the request, if authenticated.
+    message: rawErr.message, // The original error's message (safe or not - this log is server-side only).
+    stack: statusCode >= 500 ? rawErr.stack : undefined, // Full stack trace for real failures - NEVER sent in the HTTP response.
   });
 
   const responseBody = {
