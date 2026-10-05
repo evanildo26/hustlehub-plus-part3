@@ -2,12 +2,11 @@
  * Minimal, dependency-free event logger.
  *
  * The POE requires that key system events (login attempts, registrations,
- * errors, etc.) are logged. For Part 1 this writes structured, single-line
- * JSON entries to both the console and a rolling log file
- * (src/logs/events.log), which is enough to demonstrate the practice and
- * to inspect what happened during a demo/marking session. Part 3 extends
- * this with dedicated logging for bookings/transactions and, optionally, a
- * cloud-based logging platform.
+ * bookings, transactions, errors, etc.) are logged. This writes structured,
+ * single-line JSON entries to both the console and a log file
+ * (src/logs/events.log), which is enough to inspect what happened during a
+ * demo/marking session. Part 3 extends this with a cloud-based logging
+ * platform.
  *
  * Log entries deliberately never include passwords, tokens, or other
  * secrets - only enough context to investigate an incident.
@@ -17,21 +16,24 @@ const path = require('path'); // Built-in module for building OS-independent fil
 
 const LOG_DIR = path.join(__dirname, '..', 'logs'); // src/logs - where the event log file lives.
 const LOG_FILE = path.join(LOG_DIR, 'events.log'); // The actual log file path.
+const SILENT = process.env.NODE_ENV === 'test'; // Keep Jest output readable - tests assert on behaviour, not log lines.
 
-if (!fs.existsSync(LOG_DIR)) {
+if (!SILENT && !fs.existsSync(LOG_DIR)) {
   fs.mkdirSync(LOG_DIR, { recursive: true }); // Create the logs folder on first run if it doesn't exist yet.
 }
 
 function write(level, event, meta = {}) {
   // Internal helper that all the exported log functions (info/warn/error/security) funnel through.
+  if (SILENT) return;
+
   const entry = {
     timestamp: new Date().toISOString(), // ISO 8601 timestamp so entries can be sorted/filtered reliably.
-    level, // Severity/category of the event: 'info' | 'warn' | 'error' | 'security'.
+    level, // Severity/category of the event: 'info' | 'warn' | 'error' | 'security' | 'audit'.
     event, // A short, machine-readable event name, e.g. 'LOGIN_SUCCESS'.
     ...meta, // Any extra structured context passed in (userId, path, reason, etc.) - spread directly into the entry.
   };
 
-  const line = JSON.stringify(entry); // Serialise to a single-line JSON string (easy to grep/parse later).
+  const line = JSON.stringify(entry); // Serialise to a single-line JSON string - JSON escaping also neutralises log-forging newlines.
 
   // Console output for local development / live demo visibility
   const consoleFn = level === 'error' ? console.error : console.log; // Route errors to stderr, everything else to stdout.
@@ -51,5 +53,6 @@ module.exports = {
   info: (event, meta) => write('info', event, meta), // General informational events (e.g. server started).
   warn: (event, meta) => write('warn', event, meta), // Something worth noticing but not necessarily an error.
   error: (event, meta) => write('error', event, meta), // Something went wrong (exceptions, failed requests).
-  security: (event, meta) => write('security', event, meta), // Security-relevant events (login attempts, invalid tokens).
+  security: (event, meta) => write('security', event, meta), // Security-relevant events (login attempts, denied access, rate limits).
+  audit: (event, meta) => write('audit', event, meta), // Business events with a money/ownership trail (gigs, bookings, transactions).
 };
