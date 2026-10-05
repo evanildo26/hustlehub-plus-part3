@@ -5,7 +5,8 @@
  *  - loginLimiter     brute-force / credential stuffing. Only FAILED logins
  *                     (401) count, so a legitimate user who logs in
  *                     successfully is never locked out by their own use.
- *  - registerLimiter  mass fake-account creation from one IP.
+ *  - registerLimiter  mass fake-account creation from one IP (only accounts
+ *                     actually created count towards the limit).
  *  - bookingLimiter   booking spam. Keyed per authenticated USER rather than
  *                     per IP, so one abusive account can't hide behind
  *                     changing IPs, and users sharing an IP (e.g. a campus
@@ -61,6 +62,7 @@ const registerLimiter = createLimiter({
   name: 'register',
   max: rateLimits.registerMax,
   message: 'Too many accounts created from this device. Please try again later.',
+  skipFailedRequests: true, // Only accounts actually created count - rejected sign-ups don't create fake accounts.
 });
 
 const bookingLimiter = createLimiter({
