@@ -1,24 +1,79 @@
 /**
- * Rate limiting for authentication endpoints.
+ * Rate limiting for sensitive endpoints.
  *
- * Registration and login are the most attractive targets for brute-force
- * and credential-stuffing attacks, so they are limited per-IP. This is
- * additional hardening put in place ahead of Part 2 (where rate limiting
- * becomes a graded requirement for auth + booking endpoints) - the limits
- * below are deliberately generous so they do not get in the way of manual
- * Postman testing/marking.
+ * Each limiter targets a different abuse case:
+ *  - loginLimiter     brute-force / credential stuffing. Only FAILED logins
+ *                     (401) count, so a legitimate user who logs in
+ *                     successfully is never locked out by their own use.
+ *  - registerLimiter  mass fake-account creation from one IP.
+ *  - bookingLimiter   booking spam. Keyed per authenticated USER rather than
+ *                     per IP, so one abusive account can't hide behind
+ *                     changing IPs, and users sharing an IP (e.g. a campus
+ *                     network) don't throttle each other.
+ *  - apiLimiter       a generous global ceiling against scraping/flooding.
+ *
+ * Limits are read from env.js so they can be tuned per environment. When a
+ * limit is hit the client receives a 429 with a clear message and a
+ * `retryAfterSeconds` value, and the event is logged for monitoring.
  */
 const rateLimit = require('express-rate-limit'); // Third-party middleware that tracks and caps requests per client.
+const { rateLimits } = require('../config/env');
+const logger = require('../utils/logger');
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes, expressed in milliseconds - the rolling time window each client is measured over.
-  max: 30, // 30 attempts per IP per window
-  standardHeaders: true, // Return rate-limit info in the standard `RateLimit-*` response headers.
-  legacyHeaders: false, // Don't also send the older, non-standard `X-RateLimit-*` headers (avoids duplication).
-  message: {
-    success: false, // Keep the same response shape as every other error in this API.
-    message: 'Too many attempts from this device. Please try again in a few minutes.', // Sent once the limit is exceeded (HTTP 429).
-  },
+/**
+ * Builds a limiter with the shared response shape. Exported so tests can
+ * create limiters with tiny limits without touching the app's real ones.
+ */
+function createLimiter({ name, max, windowMs = rateLimits.windowMs, message, ...options }) {
+  return rateLimit({
+    windowMs, // The rolling time window each client is measured over.
+    limit: max, // Requests allowed per client per window.
+    standardHeaders: 'draft-7', // Send a combined `RateLimit` header plus `RateLimit-Policy`, so clients can see their budget.
+    legacyHeaders: false, // Don't also send the older, non-standard `X-RateLimit-*` headers (avoids duplication).
+    handler: (req, res, next, opts) => {
+      const retryAfterSeconds = Math.ceil(opts.windowMs / 1000);
+      logger.security('RATE_LIMIT_EXCEEDED', {
+        limiter: name,
+        ip: req.ip,
+        userId: req.user && req.user.id,
+        path: req.originalUrl,
+      });
+      res.set('Retry-After', String(retryAfterSeconds));
+      res.status(429).json({
+        success: false, // Keep the same response shape as every other error in this API.
+        message,
+        retryAfterSeconds,
+      });
+    },
+    ...options,
+  });
+}
+
+const loginLimiter = createLimiter({
+  name: 'login',
+  max: rateLimits.loginMax,
+  message: 'Too many failed login attempts. Please wait 15 minutes before trying again.',
+  requestWasSuccessful: (req, res) => res.statusCode !== 401, // Only wrong-credential responses use up the budget...
+  skipSuccessfulRequests: true, // ...and everything else is refunded.
 });
 
-module.exports = { authLimiter }; // Exported for use on the register/login routes in authRoutes.js.
+const registerLimiter = createLimiter({
+  name: 'register',
+  max: rateLimits.registerMax,
+  message: 'Too many accounts created from this device. Please try again later.',
+});
+
+const bookingLimiter = createLimiter({
+  name: 'booking',
+  max: rateLimits.bookingMax,
+  message: 'You are making bookings too quickly. Please wait a few minutes and try again.',
+  keyGenerator: (req) => `user:${req.user.id}`, // Runs after `protect`, so req.user is always set.
+});
+
+const apiLimiter = createLimiter({
+  name: 'api',
+  max: rateLimits.apiMax,
+  message: 'Too many requests. Please slow down and try again shortly.',
+});
+
+module.exports = { createLimiter, loginLimiter, registerLimiter, bookingLimiter, apiLimiter };
