@@ -144,12 +144,19 @@ async function main() {
   await connectDB();
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
 
+  const freelancers = [];
+  for (const f of FREELANCERS) freelancers.push({ user: await upsertUser(f.name, f.email, 'freelancer', passwordHash), gigs: f.gigs });
+
+  // Create gigs round-robin (one per freelancer at a time) so the newest-first
+  // marketplace shows a mix of categories and freelancers on the first page.
   let gigCount = 0;
-  for (const f of FREELANCERS) {
-    const freelancer = await upsertUser(f.name, f.email, 'freelancer', passwordHash);
-    for (const [title, description, category, price, deliveryDays] of f.gigs) {
-      const exists = await Gig.exists({ freelancer: freelancer._id, title });
-      if (!exists) await Gig.create({ freelancer: freelancer._id, title, description, category, price, deliveryDays });
+  const rounds = Math.max(...freelancers.map((f) => f.gigs.length));
+  for (let i = 0; i < rounds; i += 1) {
+    for (const { user, gigs } of freelancers) {
+      if (!gigs[i]) continue;
+      const [title, description, category, price, deliveryDays] = gigs[i];
+      const exists = await Gig.exists({ freelancer: user._id, title });
+      if (!exists) await Gig.create({ freelancer: user._id, title, description, category, price, deliveryDays });
       gigCount += 1;
     }
   }
