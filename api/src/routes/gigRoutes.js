@@ -16,6 +16,9 @@ const router = express.Router();
 // Public: anyone can browse the marketplace (read-only, active gigs, no private freelancer data).
 router.get('/', listGigsRules, handleValidationErrors, gigController.listGigs);
 
+// Public: active gig count per category. Declared before '/:id' so "categories" isn't treated as an id.
+router.get('/categories', gigController.listCategories);
+
 // Freelancer: their own gigs, including inactive ones. Declared before '/:id' so "mine" isn't treated as an id.
 router.get('/mine', protect, restrictTo('freelancer'), gigController.listMyGigs);
 

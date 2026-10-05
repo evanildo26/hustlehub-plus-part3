@@ -85,6 +85,21 @@ async function listGigs(req, res, next) {
   }
 }
 
+// GET /api/gigs/categories - public count of active gigs per category (for the marketplace filters)
+async function listCategories(req, res, next) {
+  try {
+    const counts = await Gig.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
+    const byCategory = Object.fromEntries(counts.map((c) => [c._id, c.count]));
+    const data = Gig.CATEGORIES.map((category) => ({ category, count: byCategory[category] || 0 }));
+    return res.status(200).json({ success: true, data, total: data.reduce((sum, c) => sum + c.count, 0) });
+  } catch (err) {
+    return next(err);
+  }
+}
+
 // GET /api/gigs/mine - the calling freelancer's own gigs, including inactive ones
 async function listMyGigs(req, res, next) {
   try {
@@ -159,4 +174,4 @@ async function deleteGig(req, res, next) {
   }
 }
 
-module.exports = { listGigs, listMyGigs, getGig, createGig, updateGig, deleteGig };
+module.exports = { listGigs, listCategories, listMyGigs, getGig, createGig, updateGig, deleteGig };

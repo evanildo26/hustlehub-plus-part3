@@ -118,6 +118,20 @@ describe('Public browsing', () => {
     expect(res.body.data).toHaveLength(0); // ".*" would match everything if it were used as a raw regex.
   });
 
+  test('category counts include only active gigs and every category', async () => {
+    const { token } = await createUser('freelancer');
+    await createGig(token);
+    await createGig(token, { title: 'Hidden design gig', isActive: false });
+    await createGig(token, { category: 'writing', title: 'Blog writing service' });
+
+    const res = await request(app).get('/api/gigs/categories');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(8);
+    expect(res.body.data.find((c) => c.category === 'design').count).toBe(1);
+    expect(res.body.data.find((c) => c.category === 'writing').count).toBe(1);
+    expect(res.body.total).toBe(2);
+  });
+
   test('an invalid gig id returns 400, a missing one 404', async () => {
     expect((await request(app).get('/api/gigs/not-an-id')).status).toBe(400);
     expect((await request(app).get('/api/gigs/65a000000000000000000000')).status).toBe(404);
