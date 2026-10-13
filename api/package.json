@@ -1,7 +1,7 @@
 {
   "name": "hustlehub-backend",
-  "version": "2.0.0",
-  "description": "HustleHub+ secure freelance marketplace API - Part 2: Secure Stack (INSY7314/APDS7311 POE)",
+  "version": "3.0.0",
+  "description": "HustleHub+ secure freelance marketplace API - Part 3: DevSecOps, Monitoring and Finalisation (INSY7314/APDS7311 POE)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,9 @@
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:demo": "node scripts/seedDemo.js",
     "test": "cross-env NODE_ENV=test vitest run",
-    "test:api": "node scripts/runNewman.js"
+    "test:api": "node scripts/runNewman.js",
+    "lint": "eslint .",
+    "lint:report": "eslint . --format json --output-file ../docs/evidence/eslint-api-report.json"
   },
   "keywords": [
     "hustlehub",
@@ -32,7 +34,12 @@
     "mongoose": "^9.11.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "cross-env": "^10.1.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-n": "^17.24.0",
+    "eslint-plugin-security": "^3.0.1",
+    "globals": "^15.15.0",
     "newman": "^6.2.2",
     "newman-reporter-htmlextra": "^1.23.1",
     "nodemon": "^3.1.4",
@@ -41,6 +48,6 @@
     "vitest": "^4.1.11"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   }
 }
