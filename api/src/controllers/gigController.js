@@ -51,8 +51,10 @@ async function listGigs(req, res, next) {
     const page = req.query.page || 1;
     const limit = req.query.limit || 12;
 
-    const filter = { isActive: true }; // Built from validated, typed values only - never from raw req.query objects.
-    if (category) filter.category = category;
+    // Built from validated, typed values only - never from raw req.query objects. $eq and Number()
+    // also guarantee each value is used literally, never as a query operator (CodeQL js/sql-injection).
+    const filter = { isActive: true };
+    if (category) filter.category = { $eq: String(category) };
     if (search) {
       // Reviewed static-analysis finding (security/detect-non-literal-regexp): the
       // input is escaped so every character matches literally, and the validator
@@ -63,8 +65,8 @@ async function listGigs(req, res, next) {
     }
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
-      if (minPrice !== undefined) filter.price.$gte = minPrice;
-      if (maxPrice !== undefined) filter.price.$lte = maxPrice;
+      if (minPrice !== undefined) filter.price.$gte = Number(minPrice);
+      if (maxPrice !== undefined) filter.price.$lte = Number(maxPrice);
     }
 
     const [gigs, total] = await Promise.all([

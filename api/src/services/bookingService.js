@@ -39,7 +39,8 @@ function simulatePayment() {
 }
 
 async function createBooking({ gigId, clientId, notes }) {
-  const gig = await Gig.findById(gigId);
+  // $eq makes the id a literal value even if a non-string ever got past validation (CodeQL js/sql-injection).
+  const gig = await Gig.findOne({ _id: { $eq: gigId } });
   if (!gig || !gig.isActive) throw new AppError('This gig is not available for booking.', 404);
   if (gig.freelancer.toString() === clientId) throw new AppError('You cannot book your own gig.', 400);
 
