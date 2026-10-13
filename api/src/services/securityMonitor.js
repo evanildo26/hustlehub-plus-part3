@@ -29,6 +29,7 @@ const SUSPICIOUS = new Set([
   'INVALID_TOKEN_ATTEMPT',
   'REVOKED_TOKEN_USED',
   'NOSQL_INJECTION_ATTEMPT',
+  'PROTOTYPE_POLLUTION_ATTEMPT',
   'RATE_LIMIT_EXCEEDED',
 ]);
 
@@ -43,7 +44,7 @@ function classify(events) {
   const half = events.length / 2;
   if (count(['LOGIN_FAILED', 'LOGIN_BLOCKED_LOCKED', 'ACCOUNT_LOCKED']) >= half) return 'BRUTE_FORCE_LOGIN';
   if (count(['ACCESS_DENIED', 'OWNERSHIP_VIOLATION']) >= half) return 'ACCESS_PROBING';
-  if (count(['NOSQL_INJECTION_ATTEMPT']) >= half) return 'INJECTION_ATTEMPTS';
+  if (count(['NOSQL_INJECTION_ATTEMPT', 'PROTOTYPE_POLLUTION_ATTEMPT']) >= half) return 'INJECTION_ATTEMPTS';
   if (count(['INVALID_TOKEN_ATTEMPT', 'REVOKED_TOKEN_USED']) >= half) return 'TOKEN_TAMPERING';
   return 'SUSPICIOUS_ACTIVITY';
 }
@@ -62,7 +63,9 @@ function track(entry) {
   const alertedRecently = now - (lastAlertAt.get(entry.ip) || 0) < windowMs;
   if (events.length >= security.alertThreshold && !alertedRecently) {
     lastAlertAt.set(entry.ip, now);
-    const breakdown = events.reduce((acc, e) => ({ ...acc, [e.event]: (acc[e.event] || 0) + 1 }), {});
+    const counts = new Map();
+    events.forEach((e) => counts.set(e.event, (counts.get(e.event) || 0) + 1));
+    const breakdown = Object.fromEntries(counts);
     logger.alert('SECURITY_ALERT', {
       pattern: classify(events),
       ip: entry.ip,
@@ -100,7 +103,7 @@ async function getSecuritySummary({ hours = 24 } = {}) {
       { $sort: { count: -1 } },
     ]),
     SecurityEvent.aggregate([
-      { $match: { createdAt: { $gte: since }, event: { $in: ['LOGIN_FAILED', 'ACCESS_DENIED', 'OWNERSHIP_VIOLATION', 'NOSQL_INJECTION_ATTEMPT', 'INVALID_TOKEN_ATTEMPT'] }, ip: { $ne: null } } },
+      { $match: { createdAt: { $gte: since }, event: { $in: ['LOGIN_FAILED', 'ACCESS_DENIED', 'OWNERSHIP_VIOLATION', 'NOSQL_INJECTION_ATTEMPT', 'PROTOTYPE_POLLUTION_ATTEMPT', 'INVALID_TOKEN_ATTEMPT'] }, ip: { $ne: null } } },
       { $group: { _id: '$ip', count: { $sum: 1 }, last: { $max: '$createdAt' } } },
       { $sort: { count: -1 } },
       { $limit: 5 },
@@ -111,20 +114,21 @@ async function getSecuritySummary({ hours = 24 } = {}) {
     LoginAttempt.countDocuments({ lockedUntil: { $gt: new Date() } }),
   ]);
 
-  const counts = Object.fromEntries(byEvent.map((e) => [e._id, e.count]));
+  const byName = new Map(byEvent.map((e) => [e._id, e.count]));
+  const c = (name) => byName.get(name) || 0;
   return {
     windowHours: hours,
     since: since.toISOString(),
     totals: {
-      failedLogins: counts.LOGIN_FAILED || 0,
-      successfulLogins: counts.LOGIN_SUCCESS || 0,
-      accountsLocked: counts.ACCOUNT_LOCKED || 0,
+      failedLogins: c('LOGIN_FAILED'),
+      successfulLogins: c('LOGIN_SUCCESS'),
+      accountsLocked: c('ACCOUNT_LOCKED'),
       currentlyLocked: lockedAccounts,
-      accessDenied: (counts.ACCESS_DENIED || 0) + (counts.OWNERSHIP_VIOLATION || 0),
-      injectionAttempts: counts.NOSQL_INJECTION_ATTEMPT || 0,
-      invalidTokens: (counts.INVALID_TOKEN_ATTEMPT || 0) + (counts.REVOKED_TOKEN_USED || 0),
-      rateLimited: counts.RATE_LIMIT_EXCEEDED || 0,
-      alerts: counts.SECURITY_ALERT || 0,
+      accessDenied: c('ACCESS_DENIED') + c('OWNERSHIP_VIOLATION'),
+      injectionAttempts: c('NOSQL_INJECTION_ATTEMPT') + c('PROTOTYPE_POLLUTION_ATTEMPT'),
+      invalidTokens: c('INVALID_TOKEN_ATTEMPT') + c('REVOKED_TOKEN_USED'),
+      rateLimited: c('RATE_LIMIT_EXCEEDED'),
+      alerts: c('SECURITY_ALERT'),
     },
     byEvent: byEvent.map((e) => ({ event: e._id, count: e.count })),
     topIps,

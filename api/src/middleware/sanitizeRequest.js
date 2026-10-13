@@ -10,23 +10,33 @@
  * req.params - at any depth - before validation or controllers run, and
  * logs the attempt as a security event.
  *
+ * It also removes `__proto__`, `constructor` and `prototype` keys
+ * (added in Part 3 after static analysis flagged object-injection sinks).
+ * JSON.parse keeps "__proto__" as an ordinary key; if such an object is
+ * later merged or copied key-by-key, it can modify Object.prototype for the
+ * whole process (prototype pollution).
+ *
  * (The popular express-mongo-sanitize package does the same job; this small
  * in-house version avoids an extra dependency and adds the logging.)
  */
 const logger = require('../utils/logger');
 
 const MAX_DEPTH = 10; // Deeply nested payloads are truncated rather than recursed into forever.
+const PROTOTYPE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+const isOperatorKey = (key) => key.startsWith('$') || key.includes('.');
 
 /** Recursively deletes dangerous keys. Returns the list of keys removed. */
 function stripOperators(target, removed = [], depth = 0) {
   if (!target || typeof target !== 'object' || depth > MAX_DEPTH) return removed;
 
-  for (const key of Object.keys(target)) {
-    if (key.startsWith('$') || key.includes('.')) {
+  // Walks the object's OWN entries and deletes the unsafe keys in place.
+  for (const [key, value] of Object.entries(target)) {
+    if (isOperatorKey(key) || PROTOTYPE_KEYS.has(key)) {
       removed.push(key);
-      delete target[key];
+      Reflect.deleteProperty(target, key);
     } else {
-      stripOperators(target[key], removed, depth + 1);
+      stripOperators(value, removed, depth + 1);
     }
   }
   return removed;
@@ -40,10 +50,10 @@ function sanitizeRequest(req, res, next) {
   ];
 
   if (removed.length > 0) {
-    logger.security('NOSQL_INJECTION_ATTEMPT', {
+    const pollution = removed.some((k) => PROTOTYPE_KEYS.has(k));
+    logger.security(pollution ? 'PROTOTYPE_POLLUTION_ATTEMPT' : 'NOSQL_INJECTION_ATTEMPT', {
       method: req.method,
       path: req.originalUrl.split('?')[0], // Path only - the query string is the attacker-controlled part.
-      ip: req.ip,
       removedKeys: removed.slice(0, 10),
     });
   }

@@ -3,6 +3,7 @@ const { app, request } = require('./helpers');
 const { createLimiter } = require('../src/middleware/rateLimiter');
 const { stripOperators } = require('../src/middleware/sanitizeRequest');
 const { sanitizeText, escapeRegex } = require('../src/utils/sanitize');
+const logger = require('../src/utils/logger');
 
 describe('Security headers', () => {
   test('API responses carry a strict CSP and hardening headers', async () => {
@@ -71,7 +72,33 @@ describe('Sanitisation helpers', () => {
   });
 
   test('escapeRegex neutralises regex operators', () => {
+    // The point of this test is to build a RegExp from (escaped) input, as gigController does.
+    /* eslint-disable security/detect-non-literal-regexp */
     expect(new RegExp(escapeRegex('.*')).test('anything')).toBe(false);
     expect(new RegExp(escapeRegex('a+b')).test('a+b')).toBe(true);
+    /* eslint-enable security/detect-non-literal-regexp */
+  });
+});
+
+describe('Prototype pollution (static-analysis follow-up)', () => {
+  test('stripOperators removes __proto__, constructor and prototype keys at any depth', () => {
+    const input = JSON.parse('{"title":"ok","__proto__":{"isAdmin":true},"nested":{"constructor":{"prototype":{"x":1}}}}');
+    const removed = stripOperators(input);
+    expect(removed).toEqual(expect.arrayContaining(['__proto__', 'constructor']));
+    expect(Object.keys(input)).toEqual(['title', 'nested']);
+    expect(Object.keys(input.nested)).toEqual([]);
+    expect({}.isAdmin).toBeUndefined(); // Object.prototype untouched
+  });
+
+  test('a __proto__ payload sent to the API is stripped and logged as a security event', async () => {
+    const events = [];
+    logger.addSink((e) => events.push(e.event));
+    const res = await request(app)
+      .post('/api/no-such-route')
+      .set('Content-Type', 'application/json')
+      .send('{"name":"x","__proto__":{"role":"admin"}}');
+    expect(res.status).toBe(404); // Handled normally - no crash.
+    expect({}.role).toBeUndefined();
+    expect(events).toContain('PROTOTYPE_POLLUTION_ATTEMPT');
   });
 });
