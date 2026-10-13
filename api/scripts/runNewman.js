@@ -1,11 +1,11 @@
 /**
- * Runs the Part 2 Postman collection with Newman.
+ * Runs the Part 3 Postman collection with Newman (Part 2 tests + tax and Part 3 security folders).
  *
  * Reads PORT and the seeded admin credentials from .env (so no secrets live
  * inside the collection file), then writes three reports:
  *   - the console (CLI reporter)
  *   - postman/reports/newman-report.html  (htmlextra - human-readable evidence)
- *   - postman/reports/newman-junit.xml    (JUnit - for the CI pipeline in Part 3)
+ *   - postman/reports/newman-junit.xml    (JUnit - published by the CI pipeline)
  * Exits with code 1 if any assertion fails, so CI can fail the build.
  *
  * Prerequisites: the API is running (npm start) and the admin is seeded
@@ -22,7 +22,7 @@ const baseUrl = process.env.BASE_URL || `https://localhost:${process.env.PORT ||
 
 newman.run(
   {
-    collection: require('../postman/HustleHub-Part2.postman_collection.json'),
+    collection: require('../postman/HustleHub-Part3.postman_collection.json'),
     envVar: [
       { key: 'baseUrl', value: baseUrl },
       { key: 'adminEmail', value: process.env.ADMIN_EMAIL || '' },
