@@ -75,7 +75,13 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: { port: 5173, strictPort: true, https, proxy, headers: securityHeaders({ dev: true }) },
     preview: { port: 4173, strictPort: true, https, proxy, headers: securityHeaders({ dev: false }) },
-    build: { sourcemap: false }, // Don't publish source maps that reveal original source to anyone who opens dev tools.
+    build: {
+      sourcemap: false, // Don't publish source maps that reveal original source to anyone who opens dev tools.
+      // Never inline small assets as data: URLs. Vite does this by default for
+      // files under 4 KB (some font subsets are), and the strict CSP
+      // (font-src 'self') would then block them. Every asset is a real file.
+      assetsInlineLimit: 0,
+    },
     test: {
       environment: 'jsdom',
       globals: true,
