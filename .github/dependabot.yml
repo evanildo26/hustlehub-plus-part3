@@ -1,22 +1,28 @@
 # Dependabot keeps dependencies patched: it opens a pull request (which the
 # CI/CD pipeline then tests) whenever an npm package, base image or GitHub
-# Action has a new version or a security fix.
+# Action has a new version or a security fix. New releases must be a week
+# old first, which gives the community time to spot a compromised package.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /api
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 } # Wait a week before proposing a brand-new release (malicious-release protection).
     open-pull-requests-limit: 5
   - package-ecosystem: npm
     directory: /client
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 } # Wait a week before proposing a brand-new release (malicious-release protection).
     open-pull-requests-limit: 5
   - package-ecosystem: docker
     directory: /api
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 } # Wait a week before proposing a brand-new release (malicious-release protection).
   - package-ecosystem: docker
     directory: /client
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 } # Wait a week before proposing a brand-new release (malicious-release protection).
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 } # Wait a week before proposing a brand-new release (malicious-release protection).
