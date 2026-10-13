@@ -670,14 +670,15 @@ How HustleHub+ addresses common threats, mapped to the OWASP Top 10 (2021) [3].
 | Account lockout (423) ![Lockout](docs/screenshots/part3/06-account-lockout.png) | Admin Security monitor with alerts ![Monitor](docs/screenshots/part3/07-admin-security-monitor.png) |
 | Admin revokes a user's sessions ![Revoke](docs/screenshots/part3/08-admin-revoke-sessions.png) | Dashboard on a phone ![Mobile](docs/screenshots/part3/05-earnings-mobile.png) |
 | Cloud logs in Better Stack (Live tail) ![Better Stack](docs/screenshots/part3/11-better-stack-logs.png) | GitHub Actions pipeline, all jobs green ![Pipeline](docs/screenshots/part3/09-github-actions-pipeline.png) |
+| Better Stack: structured `HTTP_REQUEST` entries with status codes ![HTTP requests](docs/screenshots/part3/12-better-stack-http-requests.png) | Docker Desktop: the three containers running with live structured logs ![Docker Desktop](docs/screenshots/part3/13-docker-desktop-containers-logs.png) |
 
 Pipeline, Docker, scanning and logging evidence:
 
 | Evidence | File |
 |---|---|
 | GitHub Actions run (all jobs green) | `docs/screenshots/part3/09-github-actions-pipeline.png` |
-| Containers running and healthy | `docs/screenshots/part3/10-docker-compose-running.png`, `docs/evidence/part3/docker-compose-ps.txt` |
-| Better Stack Live tail (cloud logging) | `docs/screenshots/part3/11-better-stack-logs.png` |
+| Containers running and healthy | `docs/screenshots/part3/10-docker-compose-running.png`, `13-docker-desktop-containers-logs.png`, `docs/evidence/part3/docker-compose-ps.txt` |
+| Better Stack Live tail (cloud logging) | `docs/screenshots/part3/11-better-stack-logs.png` (security events), `12-better-stack-http-requests.png` (HTTP traffic) |
 | CodeQL results (13 alerts: 10 fixed, 3 reviewed and dismissed, 0 open) | `docs/evidence/part3/codeql-alerts.txt` and the repository Security → Code scanning tab |
 | Newman (Docker stack) | `docs/evidence/part3/newman-report.html`, `newman-cli-output.txt` |
 | OWASP ZAP report | `docs/evidence/part3/zap-report.html` |
