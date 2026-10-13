@@ -21,7 +21,15 @@ const CONTROL_CHARS = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
  */
 function sanitizeText(value, { multiline = false } = {}) {
   if (typeof value !== 'string') return value; // Non-strings are rejected by the type checks in the validators instead.
-  let clean = value.replace(TAG_PATTERN, '').replace(ANGLE_BRACKETS, '').replace(CONTROL_CHARS, '');
+  // Remove tags until nothing changes: a single pass turns "<scr<script>ipt>" into "<script>"
+  // (CodeQL js/incomplete-multi-character-sanitization). Leftover brackets are then removed too.
+  let clean = value;
+  let previous;
+  do {
+    previous = clean;
+    clean = clean.replace(TAG_PATTERN, '');
+  } while (clean !== previous);
+  clean = clean.replace(ANGLE_BRACKETS, '').replace(CONTROL_CHARS, '');
   clean = multiline
     ? clean.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n') // Keep paragraphs, but no huge vertical gaps.
     : clean.replace(/\s+/g, ' ');

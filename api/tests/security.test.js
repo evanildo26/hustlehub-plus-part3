@@ -102,3 +102,12 @@ describe('Prototype pollution (static-analysis follow-up)', () => {
     expect(events).toContain('PROTOTYPE_POLLUTION_ATTEMPT');
   });
 });
+
+describe('sanitizeText with nested tags (CodeQL follow-up)', () => {
+  test('repeats tag removal so nested tags cannot rebuild a <script> tag', () => {
+    const out = sanitizeText('<scr<script>ipt>alert(1)</script> Hi <<b>i>there');
+    expect(out).not.toMatch(/[<>]/);
+    expect(out).not.toMatch(/<script/i);
+    expect(out).toContain('Hi');
+  });
+});
