@@ -329,7 +329,7 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-siz
 .confirm__question { font-size: 0.85rem; font-weight: 700; }
 
 /* ---------- Tables ---------- */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; position: relative; } /* relative: absolutely-positioned .sr-only cells are clipped too, so they cannot widen the page on phones */
 .page > .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
 .table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 .table th { text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); background: #f8fafc; white-space: nowrap; }
