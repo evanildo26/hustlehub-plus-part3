@@ -29,3 +29,9 @@ Thumbs.db
 
 # Local AI assistant tooling config (machine-specific, not part of the submission)
 .claude/
+
+# CI test reports
+test-results/
+eslint-report.json
+semgrep.sarif
+gitleaks-report.json
