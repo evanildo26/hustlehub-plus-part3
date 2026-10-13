@@ -1,0 +1,90 @@
+# HustleHub+ full stack: MongoDB + API (Express) + client (React served by nginx).
+#
+#   cp .env.example .env        # then set JWT_SECRET and ADMIN_PASSWORD
+#   docker compose up -d --build
+#   docker compose exec api node scripts/seedAdmin.js     # admin account
+#   docker compose exec api node scripts/seedDemo.js      # optional demo data
+#   open https://localhost:8443
+#
+# Network layout (least privilege): the browser can only reach nginx.
+# nginx can reach the API; only the API can reach MongoDB. Neither the API
+# nor the database publishes a port on the host.
+
+name: hustlehub
+
+x-hardening: &hardening
+  read_only: true                      # Root filesystem is read-only; only the volumes/tmpfs below are writable.
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]                    # No Linux capabilities are needed (non-root, ports > 1024).
+  restart: unless-stopped
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    command: ["--bind_ip_all", "--quiet"]
+    volumes:
+      - mongo-data:/data/db
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api:
+    <<: *hardening
+    build: ./api
+    image: ${DOCKERHUB_NAMESPACE:-evanildo1997}/hustlehub-api:${IMAGE_TAG:-local}
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      MONGO_URI: mongodb://mongo:27017/hustlehub
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      CORS_ORIGIN: ${PUBLIC_ORIGIN:-https://localhost:8443}
+      TRUST_PROXY: "1"                 # One proxy (nginx) in front: use X-Forwarded-For for the client IP.
+      ADMIN_NAME: ${ADMIN_NAME:-Platform Admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@hustlehub.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      BETTERSTACK_SOURCE_TOKEN: ${BETTERSTACK_SOURCE_TOKEN:-}
+      BETTERSTACK_INGEST_HOST: ${BETTERSTACK_INGEST_HOST:-in.logs.betterstack.com}
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-10}
+      RATE_LIMIT_REGISTER_MAX: ${RATE_LIMIT_REGISTER_MAX:-20}
+      RATE_LIMIT_BOOKING_MAX: ${RATE_LIMIT_BOOKING_MAX:-10}
+      RATE_LIMIT_API_MAX: ${RATE_LIMIT_API_MAX:-300}
+    volumes:
+      - api-certs:/app/certs           # TLS cert (created on first start) - shared read-only with nginx.
+      - api-logs:/app/src/logs         # events.log survives container restarts.
+    tmpfs: ["/tmp"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks: [backend, frontend]
+    stop_grace_period: 15s             # Time to finish requests and flush logs to Better Stack.
+
+  client:
+    <<: *hardening
+    build: ./client
+    image: ${DOCKERHUB_NAMESPACE:-evanildo1997}/hustlehub-client:${IMAGE_TAG:-local}
+    ports:
+      - "${HTTPS_PORT:-8443}:8443"
+      - "${HTTP_PORT:-8080}:8080"
+    volumes:
+      - api-certs:/etc/nginx/api-certs:ro
+    tmpfs: ["/tmp"]                    # nginx pid/cache files and its own TLS certificate.
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [frontend]
+
+networks:
+  frontend: {}
+  backend:
+    internal: true                     # No route to the outside world from the database network.
+
+volumes:
+  mongo-data:
+  api-certs:
+  api-logs:
