@@ -14,7 +14,7 @@ const path = require('path'); // Used to build OS-independent absolute file path
 
 const app = require('./src/app'); // The configured Express application (routes + middleware) - see src/app.js.
 const { port } = require('./src/config/env'); // Destructure just the `port` value out of the centralised env config.
-const { connectDB } = require('./src/config/db'); // Opens the MongoDB connection before we accept traffic.
+const { connectDB, disconnectDB } = require('./src/config/db'); // Opens the MongoDB connection before we accept traffic.
 const logger = require('./src/utils/logger'); // Structured logger (console + file) used instead of raw console.log for system events.
 
 const CERT_DIR = path.join(__dirname, 'certs'); // Absolute path to the certs/ folder, regardless of where the process is started from.
@@ -38,13 +38,15 @@ const httpsOptions = {
   cert: fs.readFileSync(CERT_PATH), // Read the certificate synchronously for the same reason.
 };
 
+let server;
+
 connectDB()
   .then(() => {
     // Only start listening once the database is reachable - otherwise every request would fail with a 500.
-    https.createServer(httpsOptions, app).listen(port, () => {
+    server = https.createServer(httpsOptions, app).listen(port, () => {
       // https.createServer wraps the Express `app` (a request handler function) in a TLS-terminating server.
       // .listen(port, callback) starts accepting connections; the callback runs once the socket is bound.
-      logger.info('SERVER_STARTED', { port, protocol: 'https' }); // Structured log entry recording the startup event.
+      logger.info('SERVER_STARTED', { port, protocol: 'https', cloudLogging: logger.cloudEnabled }); // Structured log entry recording the startup event.
       console.log(`HustleHub+ API listening securely on https://localhost:${port}`); // Human-friendly console confirmation for local dev.
     });
   })
@@ -56,17 +58,34 @@ connectDB()
     process.exit(1);
   });
 
+/**
+ * Graceful shutdown. `docker compose stop` (and most hosts) send SIGTERM:
+ * stop accepting connections, let in-flight requests finish, send any log
+ * entries still queued for Better Stack, then close the DB connection.
+ */
+async function shutdown(signal) {
+  logger.info('SERVER_STOPPING', { signal });
+  const forceExit = setTimeout(() => process.exit(1), 10000);
+  forceExit.unref();
+  if (server) await new Promise((resolve) => server.close(resolve));
+  await logger.flush();
+  await disconnectDB();
+  process.exit(0);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 // Catch programming errors that would otherwise crash the process silently
 // or dump a stack trace to a client - log them and exit so a process
 // manager (or the developer) can restart cleanly.
 process.on('unhandledRejection', (err) => {
   // Fires when a Promise rejects and nothing .catch()'d it - e.g. a forgotten `await` or missing error handler.
   logger.error('UNHANDLED_REJECTION', { message: err.message, stack: err.stack }); // Log full detail server-side only.
-  process.exit(1); // Exit rather than continue running in a possibly-corrupted state.
+  logger.flush().finally(() => process.exit(1)); // Exit rather than continue running in a possibly-corrupted state.
 });
 
 process.on('uncaughtException', (err) => {
   // Fires for synchronous errors thrown outside of any try/catch - the last line of defence.
   logger.error('UNCAUGHT_EXCEPTION', { message: err.message, stack: err.stack });
-  process.exit(1);
+  logger.flush().finally(() => process.exit(1));
 });
