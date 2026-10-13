@@ -1,0 +1,45 @@
+CodeQL (security-extended) code scanning alerts - evanildo26/hustlehub-plus-part3
+Exported 2026-10-13T01:51Z from the GitHub code-scanning API. Open alerts: 0
+
+#13  DISMISSED  error  js/user-controlled-bypass
+     api/src/middleware/authMiddleware.js:78  - User-controlled bypass of security check
+     dismissed as false positive: Reviewed: this check only rejects a missing/malformed Bearer header (401). A well-formed header still gets full verification (signature, iss/aud/exp, jti deny-list, tokenVersion, user). Users can only cause a rejection, never a bypass. Tested.
+
+#12  DISMISSED  error  js/user-controlled-bypass
+     api/src/middleware/authMiddleware.js:78  - User-controlled bypass of security check
+     dismissed as false positive: Reviewed: this check only rejects a missing/malformed Bearer header (401). A well-formed header still gets full verification (signature, iss/aud/exp, jti deny-list, tokenVersion, user). Users can only cause a rejection, never a bypass. Tested.
+
+#11  DISMISSED  warning  js/file-access-to-http
+     api/scripts/healthcheck.js:16  - File data in outbound network request
+     dismissed as false positive: Reviewed: the file read is the API's own public TLS certificate, passed as the trusted CA so the container health check can VERIFY TLS when calling https://127.0.0.1/api/health. The file content is not sent in the request, and the destination is the local process itself.
+
+#10  FIXED  warning  js/file-system-race
+     api/scripts/generateCert.js:57  - Potential file system race condition
+
+#9  FIXED  warning  js/functionality-from-untrusted-source
+     docs/evidence/newman-report.html:19580  - Inclusion of functionality from an untrusted source
+
+#8  FIXED  warning  js/functionality-from-untrusted-source
+     docs/evidence/newman-report.html:19581  - Inclusion of functionality from an untrusted source
+
+#7  FIXED  warning  js/functionality-from-untrusted-source
+     docs/evidence/newman-report.html:19583  - Inclusion of functionality from an untrusted source
+
+#6  FIXED  warning  js/functionality-from-untrusted-source
+     docs/evidence/newman-report.html:19584  - Inclusion of functionality from an untrusted source
+
+#5  FIXED  warning  js/functionality-from-untrusted-source
+     docs/evidence/newman-report.html:19585  - Inclusion of functionality from an untrusted source
+
+#4  FIXED  error  js/sql-injection
+     api/src/services/bookingService.js:42  - Database query built from user-controlled sources
+
+#3  FIXED  error  js/sql-injection
+     api/src/controllers/gigController.js:76  - Database query built from user-controlled sources
+
+#2  FIXED  error  js/sql-injection
+     api/src/controllers/gigController.js:71  - Database query built from user-controlled sources
+
+#1  FIXED  warning  js/incomplete-multi-character-sanitization
+     api/src/utils/sanitize.js:24  - Incomplete multi-character sanitization
+

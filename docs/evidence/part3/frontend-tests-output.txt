@@ -1,0 +1,77 @@
+
+ RUN  v4.1.11 C:/Users/emeris/Documents/Assignmts/hustlehub-backend/client
+
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > only offers client and freelancer roles (no admin) 441ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > renders the login form 437ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > anonymous visitors see browse, log in and sign up 428ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows validation errors and does not call the API when fields are empty 160ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > freelancers see gig and earnings links but not admin 124ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > clients do not see freelancer or admin links 70ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > shows the amount to set aside, the tax year and the key figures from the API 609ms
+ ✓ src/tests/NavBar.test.jsx > NavBar > log out clears the session and returns to the login page 107ms
+ ✓ src/tests/AdminPage.test.jsx > Admin security monitor > shows alerts with an icon and label, the totals and recent events in plain language 612ms
+ ✓ src/tests/AdminPage.test.jsx > Admin security monitor > says so when there are no alerts 91ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > lists both provisional tax payments with due dates 114ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > loads and displays gigs from the API 805ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > hovering a month column shows a tooltip with take-home and tax 151ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > password checklist updates as the user types 560ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > a client books the gig and sees the simulated payment confirmation 1024ms
+ ✓ src/tests/AdminPage.test.jsx > Admin security monitor > changing the period reloads the events for that window 293ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > the chart can be shown as an accessible table 328ms
+ ✓ src/tests/AdminPage.test.jsx > Admin security monitor > revoking a user's sessions asks for confirmation, then shows the result 308ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > changing the age group requests a new estimate with that group 157ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > explains when income is below the tax threshold 64ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > blocks notes containing markup before calling the API 368ms
+ ✓ src/tests/EarningsPage.test.jsx > EarningsPage tax dashboard > shows a safe error message if the API refuses the request 19ms
+ ✓ src/tests/EarningsPage.test.jsx > TaxBracketBars > shows brackets up to the current one plus the next, and marks the current bracket 31ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > shows the booking rate-limit message from the API 152ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > logs in with a trimmed email and redirects a freelancer to their gigs 911ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > anonymous visitors are asked to log in instead of booking 79ms
+ ✓ src/tests/GigDetailPage.test.jsx > GigDetailPage booking flow > freelancers cannot book; owners get an edit link 77ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > searching sends the search term and category to the API 987ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > category chips show live counts and filter the results when clicked 429ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows the API's generic error and clears the password on failure 835ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > blocks submission when passwords do not match 1595ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > popular search pills run a search 372ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > shows an empty state when nothing matches 108ms
+ ✓ src/tests/GigsPage.test.jsx > GigsPage > shows a friendly error if the API cannot be reached 93ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows the rate-limit message when too many attempts are made 792ms
+ ✓ src/tests/LoginPage.test.jsx > LoginPage > shows the account-lockout message (423) and clears the password 793ms
+ ✓ src/tests/AuthContext.test.jsx > AuthContext logout > revokes the token on the server, then clears the session 417ms
+ ✓ src/tests/AuthContext.test.jsx > AuthContext logout > still clears the local session if the server cannot be reached 136ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > registers a freelancer without sending confirmPassword, then goes to login 1437ms
+ ✓ src/tests/validation.test.js > validateRegister > accepts a valid registration 3ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects script tags in the name 1ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects the admin role (cannot self-register) 0ms
+ ✓ src/tests/validation.test.js > validateRegister > requires matching passwords 1ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password short1! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password alllowercase1! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password ALLUPPERCASE1! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password NoNumbers!! 0ms
+ ✓ src/tests/validation.test.js > validateRegister > rejects weak password NoSymbols123 0ms
+ ✓ src/tests/validation.test.js > PASSWORD_RULES > every rule passes for a strong password 0ms
+ ✓ src/tests/validation.test.js > validateLogin > requires a valid email and a password 0ms
+ ✓ src/tests/validation.test.js > validateGig > accepts a valid gig 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags title for { title: 'abc' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags title for { title: 'Logo <b>bold</b> design' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags description for { description: 'too short' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags category for { category: 'hacking' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags price for { price: '10' } 29ms
+ ✓ src/tests/validation.test.js > validateGig > flags price for { price: '100.555' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags deliveryDays for { deliveryDays: '0' } 0ms
+ ✓ src/tests/validation.test.js > validateGig > flags deliveryDays for { deliveryDays: '2.5' } 0ms
+ ✓ src/tests/validation.test.js > validateBookingNotes > limits length and blocks markup 0ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > redirects anonymous visitors to the login page 67ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > shows access denied to a logged-in user with the wrong role 191ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > renders the page for an allowed role 7ms
+ ✓ src/tests/ProtectedRoute.test.jsx > ProtectedRoute > shows a loader while the session is being checked 30ms
+ ✓ src/tests/GigCard.test.jsx > GigCard > renders the gig title, price, category and freelancer 284ms
+ ✓ src/tests/GigCard.test.jsx > GigCard > renders markup in data as plain text, never as HTML (XSS) 17ms
+ ✓ src/tests/GigCard.test.jsx > GigCard > truncates long descriptions 15ms
+ ✓ src/tests/RegisterPage.test.jsx > RegisterPage > shows server-side field errors next to the right input 1234ms
+
+ Test Files  11 passed (11)
+      Tests  68 passed (68)
+   Start at  03:12:52
+   Duration  9.25s (transform 1.63s, setup 5.82s, import 5.19s, tests 18.46s, environment 22.49s)
+

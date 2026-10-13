@@ -1,0 +1,4 @@
+NAME                 IMAGE                              COMMAND                  SERVICE   CREATED              STATUS                        PORTS
+hustlehub-api-1      evanildo1997/hustlehub-api:ci      "/sbin/tini -- docke…"   api       About a minute ago   Up About a minute (healthy)   5000/tcp
+hustlehub-client-1   evanildo1997/hustlehub-client:ci   "/docker-entrypoint.…"   client    About a minute ago   Up About a minute (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp, 0.0.0.0:8443->8443/tcp, [::]:8443->8443/tcp
+hustlehub-mongo-1    mongo:7.0                          "docker-entrypoint.s…"   mongo     About a minute ago   Up About a minute (healthy)   

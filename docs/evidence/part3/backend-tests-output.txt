@@ -1,0 +1,152 @@
+
+ RUN  v4.1.11 C:/Users/emeris/Documents/Assignmts/hustlehub-backend/api
+
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Account lockout (per email) > 5 wrong passwords lock the account, and even the right password is refused while locked 207ms
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Account lockout (per email) > unknown emails lock in exactly the same way, so lockout reveals nothing about accounts 1892ms
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Account lockout (per email) > a successful login resets the failure counter 139ms
+ ✓ tests/securityFeatures.test.js > Account lockout (per email) > locking an account is logged as ACCOUNT_LOCKED with a masked email 78ms
+ ✓ tests/securityFeatures.test.js > Token revocation > logout revokes that token immediately; other sessions keep working 74ms
+ ✓ tests/securityFeatures.test.js > Token revocation > logout requires a valid token 8ms
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Token revocation > an admin can revoke every session of a user; the user can log in again afterwards 63ms
+ ✓ tests/securityFeatures.test.js > Token revocation > only admins can revoke sessions; ids are validated 35ms
+ ✓ tests/securityFeatures.test.js > Token revocation > a correctly signed token without a jti is rejected 12ms
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Security monitoring > repeated failures from one IP raise a single BRUTE_FORCE_LOGIN alert 4666ms
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Security monitoring > admins see a summary of recent security events; other roles get 403 990ms
+(node:17968) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/securityFeatures.test.js > Request ids and log hygiene > every response carries an X-Request-Id that matches the logged entries 448ms
+ ✓ tests/securityFeatures.test.js > Request ids and log hygiene > a safe incoming request id is kept; an unsafe one is replaced 27ms
+ ✓ tests/securityFeatures.test.js > Request ids and log hygiene > secret-looking fields are redacted and emails masked before anything is logged 7ms
+ ✓ tests/auth.test.js > POST /api/auth/register > creates an account and never returns or stores the plain password 453ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects a duplicate email with 409 409ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects weak password with 400 19ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects invalid email with 400 17ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects self-assigned admin role with 400 11ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects script in name with 400 12ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects missing name with 400 13ms
+ ✓ tests/auth.test.js > POST /api/auth/register > rejects unexpected fields (mass assignment) 13ms
+ ✓ tests/auth.test.js > POST /api/auth/login > returns a signed JWT with id and role claims 785ms
+(node:17260) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:17260) [MONGOOSE] Warning: mongoose: the `new` option for `findOneAndUpdate()` and `findOneAndReplace()` is deprecated. Use `returnDocument: 'after'` instead.
+ ✓ tests/auth.test.js > POST /api/auth/login > uses the same generic 401 for wrong password and unknown email 1065ms
+ ✓ tests/auth.test.js > POST /api/auth/login > blocks NoSQL operator injection in credentials 359ms
+ ✓ tests/auth.test.js > JWT-protected route GET /api/users/me > returns 401 without a token 8ms
+ ✓ tests/auth.test.js > JWT-protected route GET /api/users/me > returns the profile with a valid token 17ms
+ ✓ tests/auth.test.js > JWT-protected route GET /api/users/me > rejects a token signed with a different secret 12ms
+ ✓ tests/auth.test.js > JWT-protected route GET /api/users/me > rejects an unsigned "alg: none" token 12ms
+ ✓ tests/bookings.test.js > Creating bookings > a client booking creates a confirmed booking and a payment transaction 141ms
+ ✓ tests/bookings.test.js > Creating bookings > a freelancer cannot book gigs (403) 38ms
+ ✓ tests/bookings.test.js > Creating bookings > a client cannot choose the amount they pay 29ms
+ ✓ tests/bookings.test.js > Creating bookings > an inactive gig cannot be booked 52ms
+ ✓ tests/bookings.test.js > Booking access control > each party sees the booking; an unrelated client gets 403 76ms
+ ✓ tests/bookings.test.js > Booking access control > booking lists are scoped to the caller 74ms
+ ✓ tests/bookings.test.js > Booking access control > only the booked freelancer can complete a booking 56ms
+ ✓ tests/bookings.test.js > Transactions and income > cancelling records a refund and income nets back to zero 60ms
+ ✓ tests/bookings.test.js > Transactions and income > income is attributed to the correct freelancer only 75ms
+ ✓ tests/bookings.test.js > Transactions and income > clients cannot access the income summary 25ms
+ ✓ tests/bookings.test.js > Transactions and income > transactions are scoped per user and visible in full to admins 64ms
+ ✓ tests/bookings.test.js > Admin endpoints > only admins can list users, and password hashes are never included 35ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > a freelancer can create a gig and is recorded as its owner 123ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > a client cannot create a gig (403) 23ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > an anonymous user cannot create a gig (401) 9ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > HTML is stripped from free text before saving (stored XSS) 23ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > cannot set the owner field via the body (mass assignment) 22ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > rejects price below minimum 22ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > rejects price with 3 decimals 17ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > rejects unknown category 16ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > rejects delivery of 0 days 19ms
+ ✓ tests/gigs.test.js > Gig creation (RBAC + validation) > rejects too-short title 20ms
+ ✓ tests/gigs.test.js > Gig ownership > a freelancer cannot update another freelancer's gig (403) 35ms
+ ✓ tests/gigs.test.js > Gig ownership > the owner can update and deactivate their gig 35ms
+ ✓ tests/gigs.test.js > Gig ownership > a freelancer cannot delete another freelancer's gig, but an admin can 60ms
+ ✓ tests/gigs.test.js > Gig ownership > GET /api/gigs/mine only returns the caller's gigs 36ms
+ ✓ tests/gigs.test.js > Public browsing > lists only active gigs and hides freelancer emails 37ms
+ ✓ tests/gigs.test.js > Public browsing > search treats regex characters literally 27ms
+ ✓ tests/gigs.test.js > Public browsing > category counts include only active gigs and every category 37ms
+ ✓ tests/gigs.test.js > Public browsing > an invalid gig id returns 400, a missing one 404 14ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 1500 -> 201 15ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 1500.5 -> 201 13ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 1500.50 -> 201 14ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 1e3 -> 400 13ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 1500.505 -> 400 13ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 12. -> 400 14ms
+ ✓ tests/gigs.test.js > Price format (money amounts) > price 1.2.3 -> 400 13ms
+ ✓ tests/tax.test.js > SARS tax calculation (2026/27 tables) > income at the R99 000 threshold pays no tax after the primary rebate 3ms
+ ✓ tests/tax.test.js > SARS tax calculation (2026/27 tables) > R300 000: 44 118 + 26% of the amount above 245 100, less the R17 820 rebate 1ms
+ ✓ tests/tax.test.js > SARS tax calculation (2026/27 tables) > R1 000 000 lands in the 41% bracket 0ms
+ ✓ tests/tax.test.js > SARS tax calculation (2026/27 tables) > older taxpayers get the secondary and tertiary rebates 0ms
+ ✓ tests/tax.test.js > SARS tax calculation (2026/27 tables) > the bracket breakdown adds up to the tax before rebates 1ms
+ ✓ tests/tax.test.js > SARS tax calculation (2026/27 tables) > negative or missing income is treated as zero 0ms
+ ✓ tests/tax.test.js > Tax year boundaries (1 March - end of February) > 2026-10-15 falls in the 2027 tax year 0ms
+ ✓ tests/tax.test.js > Tax year boundaries (1 March - end of February) > 2026-03-01 falls in the 2027 tax year 0ms
+ ✓ tests/tax.test.js > Tax year boundaries (1 March - end of February) > 2026-02-28 falls in the 2026 tax year 0ms
+ ✓ tests/tax.test.js > Tax year boundaries (1 March - end of February) > 2027-01-10 falls in the 2027 tax year 0ms
+ ✓ tests/tax.test.js > buildTaxEstimate > annualises year-to-date income and applies the effective rate 3ms
+ ✓ tests/tax.test.js > buildTaxEstimate > returns 12 months, flags elapsed ones, and splits provisional tax into two payments 1ms
+ ✓ tests/tax.test.js > buildTaxEstimate > low earners below the threshold owe nothing 0ms
+ ✓ tests/tax.test.js > GET /api/income/tax-estimate > returns the freelancer's own estimate based on their net earnings 165ms
+ ✓ tests/tax.test.js > GET /api/income/tax-estimate > refunds reduce taxable income 78ms
+ ✓ tests/tax.test.js > GET /api/income/tax-estimate > clients and anonymous users are refused; bad ageGroup is a 400 56ms
+ ✓ tests/security.test.js > Security headers > API responses carry a strict CSP and hardening headers 42ms
+ ✓ tests/security.test.js > Security headers > data responses are marked no-store 13ms
+ ✓ tests/security.test.js > Controlled error responses > unknown routes return a JSON 404 with no stack trace or file paths 7ms
+ ✓ tests/security.test.js > Controlled error responses > malformed JSON returns a 400 instead of a crash 17ms
+ ✓ tests/security.test.js > Controlled error responses > oversized bodies are rejected with 413 8ms
+ ✓ tests/security.test.js > Rate limiting > returns 429 with a meaningful message once the limit is exceeded 20ms
+ ✓ tests/security.test.js > Sanitisation helpers > stripOperators removes $-operators and dotted keys at any depth 1ms
+ ✓ tests/security.test.js > Sanitisation helpers > sanitizeText strips tags, brackets and control characters 1ms
+ ✓ tests/security.test.js > Sanitisation helpers > escapeRegex neutralises regex operators 0ms
+ ✓ tests/security.test.js > Prototype pollution (static-analysis follow-up) > stripOperators removes __proto__, constructor and prototype keys at any depth 0ms
+ ✓ tests/security.test.js > Prototype pollution (static-analysis follow-up) > a __proto__ payload sent to the API is stripped and logged as a security event 7ms
+ ✓ tests/security.test.js > sanitizeText with nested tags (CodeQL follow-up) > repeats tag removal so nested tags cannot rebuild a <script> tag 0ms
+
+ Test Files  6 passed (6)
+      Tests  94 passed (94)
+   Start at  03:51:40
+   Duration  22.99s (transform 98ms, setup 85ms, import 7.38s, tests 13.97s, environment 1ms)
+

@@ -1,0 +1,503 @@
+newman
+
+HustleHub+ API - Part 3
+
+□ 0. Setup - accounts and tokens
+└ Health check
+  GET https://localhost:8443/api/health [200 OK, 923B, 70ms]
+  √  Status is 200
+  √  API reports healthy
+
+└ Register freelancer
+  POST https://localhost:8443/api/auth/register [201 Created, 1.22kB, 977ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is freelancer
+
+└ Register second freelancer
+  POST https://localhost:8443/api/auth/register [201 Created, 1.22kB, 359ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is freelancer
+
+└ Register client
+  POST https://localhost:8443/api/auth/register [201 Created, 1.21kB, 366ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is client
+
+└ Register second client (outsider)
+  POST https://localhost:8443/api/auth/register [201 Created, 1.21kB, 394ms]
+  √  Status is 201
+  √  Password is never returned
+  √  Role is client
+
+└ Login freelancer
+  POST https://localhost:8443/api/auth/login [200 OK, 1.59kB, 389ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login second freelancer
+  POST https://localhost:8443/api/auth/login [200 OK, 1.59kB, 360ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login client
+  POST https://localhost:8443/api/auth/login [200 OK, 1.57kB, 346ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login second client
+  POST https://localhost:8443/api/auth/login [200 OK, 1.57kB, 358ms]
+  √  Status is 200
+  √  Returns a JWT
+
+└ Login admin (seeded)
+  POST https://localhost:8443/api/auth/login [200 OK, 1.54kB, 358ms]
+  √  Status is 200
+  √  Role is admin
+
+□ 1. Authentication - invalid scenarios
+└ Register duplicate email -> 409
+  POST https://localhost:8443/api/auth/register [409 Conflict, 986B, 17ms]
+  √  Status is 409
+  √  Error uses the standard safe shape
+
+└ Register weak password -> 400
+  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.06kB, 13ms]
+  √  Status is 400
+  √  Reports a validation error on "password"
+
+└ Register self-assigned admin -> 400
+  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.05kB, 14ms]
+  √  Status is 400
+  √  Reports a validation error on "role"
+
+└ Register with extra isAdmin field -> 400
+  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.03kB, 10ms]
+  √  Status is 400
+  √  Reports a validation error on "isAdmin"
+
+└ Register script in name -> 400
+  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.07kB, 14ms]
+  √  Status is 400
+  √  Reports a validation error on "name"
+
+└ Login with NoSQL operator -> 400
+  POST https://localhost:8443/api/auth/login [400 Bad Request, 1.08kB, 14ms]
+  √  Status is 400
+  √  No token issued
+
+└ Login wrong password -> 401
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 365ms]
+  √  Status is 401
+
+└ Login unknown user -> 401 (same message)
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 356ms]
+  √  Status is 401
+  √  Message identical to wrong-password case (no account enumeration)
+
+└ Profile without token -> 401
+  GET https://localhost:8443/api/users/me [401 Unauthorized, 1.01kB, 14ms]
+  √  Status is 401
+  √  Error uses the standard safe shape
+
+└ Profile with tampered token -> 401
+  GET https://localhost:8443/api/users/me [401 Unauthorized, 999B, 17ms]
+  √  Status is 401
+
+└ Profile with valid token -> 200
+  GET https://localhost:8443/api/users/me [200 OK, 1.13kB, 22ms]
+  √  Status is 200
+  √  Returns own profile
+
+□ 2. Gigs - management, RBAC and ownership
+└ Freelancer creates gig -> 201
+  POST https://localhost:8443/api/gigs [201 Created, 1.33kB, 41ms]
+  √  Status is 201
+  √  Owner is the logged-in freelancer
+
+└ Create gig with HTML -> tags stripped
+  POST https://localhost:8443/api/gigs [201 Created, 1.29kB, 29ms]
+  √  Status is 201
+  √  No markup stored
+
+└ Client creates gig -> 403
+  POST https://localhost:8443/api/gigs [403 Forbidden, 998B, 18ms]
+  √  Status is 403
+  √  Error uses the standard safe shape
+
+└ Anonymous creates gig -> 401
+  POST https://localhost:8443/api/gigs [401 Unauthorized, 1.01kB, 12ms]
+  √  Status is 401
+
+└ Create gig with invalid price -> 400
+  POST https://localhost:8443/api/gigs [400 Bad Request, 1.05kB, 16ms]
+  √  Status is 400
+  √  Reports a validation error on "price"
+
+└ Create gig for another owner -> 400
+  POST https://localhost:8443/api/gigs [400 Bad Request, 1.04kB, 14ms]
+  √  Status is 400
+  √  Reports a validation error on "freelancer"
+
+└ Browse gigs (public) -> 200
+  GET https://localhost:8443/api/gigs?limit=50 [200 OK, 15.63kB, 36ms]
+  √  Status is 200
+  √  New gig is listed
+  √  Freelancer emails are not exposed
+
+└ Search gigs with regex characters -> literal match
+  GET https://localhost:8443/api/gigs?search=.* [200 OK, 992B, 16ms]
+  √  Status is 200
+  √  ".*" is not treated as a wildcard
+
+└ Get gig by id -> 200
+  GET https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [200 OK, 1.32kB, 19ms]
+  √  Status is 200
+
+└ Get gig with invalid id -> 400
+  GET https://localhost:8443/api/gigs/not-a-valid-id [400 Bad Request, 1.02kB, 10ms]
+  √  Status is 400
+  √  Reports a validation error on "id"
+
+└ Other freelancer edits gig -> 403
+  PATCH https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [403 Forbidden, 982B, 19ms]
+  √  Status is 403
+  √  Error uses the standard safe shape
+
+└ Other freelancer deletes gig -> 403
+  DELETE https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [403 Forbidden, 982B, 18ms]
+  √  Status is 403
+
+└ Owner edits gig -> 200
+  PATCH https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [200 OK, 1.33kB, 26ms]
+  √  Status is 200
+  √  Update applied
+
+└ Owner deletes own gig -> 200
+  DELETE https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e6 [200 OK, 965B, 29ms]
+  √  Status is 200
+
+└ Freelancer lists own gigs -> 200
+  GET https://localhost:8443/api/gigs/mine [200 OK, 1.29kB, 18ms]
+  √  Status is 200
+  √  Only own gigs returned
+
+□ 3. Bookings - simulated payment and access control
+└ Client books gig -> 201 + transaction
+  POST https://localhost:8443/api/bookings [201 Created, 1.88kB, 56ms]
+  √  Status is 201
+  √  Booking confirmed with simulated payment reference
+  √  Amount comes from the gig price
+  √  Payment transaction recorded with 10% fee
+
+└ Freelancer books gig -> 403
+  POST https://localhost:8443/api/bookings [403 Forbidden, 998B, 15ms]
+  √  Status is 403
+
+└ Client sets own amount -> 400
+  POST https://localhost:8443/api/bookings [400 Bad Request, 1.03kB, 14ms]
+  √  Status is 400
+  √  Reports a validation error on "amount"
+
+└ Book with invalid gig id -> 400
+  POST https://localhost:8443/api/bookings [400 Bad Request, 1.03kB, 23ms]
+  √  Status is 400
+  √  Reports a validation error on "gigId"
+
+└ Outsider views booking -> 403
+  GET https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea [403 Forbidden, 987B, 20ms]
+  √  Status is 403
+
+└ Client lists own bookings -> 200
+  GET https://localhost:8443/api/bookings [200 OK, 1.39kB, 18ms]
+  √  Status is 200
+  √  Contains the new booking
+
+└ Freelancer views bookings on their gigs -> 200
+  GET https://localhost:8443/api/bookings [200 OK, 1.39kB, 26ms]
+  √  Status is 200
+  √  Freelancer sees the booking
+
+└ Outsider lists bookings -> empty
+  GET https://localhost:8443/api/bookings [200 OK, 937B, 13ms]
+  √  Status is 200
+  √  No bookings leak to other clients
+
+└ Delete gig with confirmed booking -> 409
+  DELETE https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [409 Conflict, 1.04kB, 18ms]
+  √  Status is 409
+
+└ Client completes booking -> 403
+  PATCH https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea/complete [403 Forbidden, 998B, 14ms]
+  √  Status is 403
+
+└ Freelancer completes booking -> 200
+  PATCH https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea/complete [200 OK, 1.47kB, 23ms]
+  √  Status is 200
+  √  Status is completed
+
+└ Cancel completed booking -> 409
+  PATCH https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea/cancel [409 Conflict, 987B, 19ms]
+  √  Status is 409
+
+└ Client books gig again -> 201
+  POST https://localhost:8443/api/bookings [201 Created, 1.85kB, 29ms]
+  √  Status is 201
+
+└ Client cancels booking -> 200 + refund
+  PATCH https://localhost:8443/api/bookings/6acd8e317328430d0fdd75f0/cancel [200 OK, 2.01kB, 25ms]
+  √  Status is 200
+  √  Booking cancelled by client
+  √  Refund transaction reverses the payment
+
+□ 4. Transactions and income tracking
+└ Client transactions -> 2 payments + 1 refund
+  GET https://localhost:8443/api/transactions [200 OK, 2.47kB, 18ms]
+  √  Status is 200
+  √  Three records for this client
+  √  All belong to the client
+
+└ Outsider transactions -> empty
+  GET https://localhost:8443/api/transactions [200 OK, 937B, 15ms]
+  √  Status is 200
+  √  No transactions leak
+
+└ Freelancer income summary -> net of refund
+  GET https://localhost:8443/api/income/summary [200 OK, 1.29kB, 23ms]
+  √  Status is 200
+  √  Gross R1000 after one refund
+  √  Net R900 after 10% platform fee
+  √  Booking counts tracked
+  √  Monthly breakdown present
+
+└ Other freelancer income -> zero
+  GET https://localhost:8443/api/income/summary [200 OK, 1.11kB, 17ms]
+  √  Status is 200
+  √  Income is attributed to the correct freelancer only
+
+└ Client income summary -> 403
+  GET https://localhost:8443/api/income/summary [403 Forbidden, 998B, 15ms]
+  √  Status is 403
+
+□ 5. Admin capabilities
+└ Client lists users -> 403
+  GET https://localhost:8443/api/admin/users [403 Forbidden, 998B, 13ms]
+  √  Status is 403
+
+└ Freelancer views stats -> 403
+  GET https://localhost:8443/api/admin/stats [403 Forbidden, 998B, 15ms]
+  √  Status is 403
+
+└ Admin lists users -> 200 (no hashes)
+  GET https://localhost:8443/api/admin/users [200 OK, 6.8kB, 15ms]
+  √  Status is 200
+  √  No password hashes in response
+
+└ Admin views platform stats -> 200
+  GET https://localhost:8443/api/admin/stats [200 OK, 1.06kB, 23ms]
+  √  Status is 200
+  √  Stats include bookings and revenue
+
+└ Second freelancer creates gig -> 201
+  POST https://localhost:8443/api/gigs [201 Created, 1.33kB, 17ms]
+  √  Status is 201
+
+└ Admin removes any gig (moderation) -> 200
+  DELETE https://localhost:8443/api/gigs/6acd8e327328430d0fdd75f6 [200 OK, 965B, 20ms]
+  √  Status is 200
+
+└ Admin cannot book gigs -> 403
+  POST https://localhost:8443/api/bookings [403 Forbidden, 998B, 16ms]
+  √  Status is 403
+
+□ 6. Security controls
+└ Security headers present
+  GET https://localhost:8443/api/health [200 OK, 923B, 9ms]
+  √  Status is 200
+  √  Content-Security-Policy is strict
+  √  HSTS enabled
+  √  Clickjacking protection
+  √  MIME sniffing disabled
+  √  Rate limit headers advertised
+  √  Framework not disclosed
+
+└ Data responses are not cached
+  GET https://localhost:8443/api/gigs [200 OK, 6.06kB, 24ms]
+  √  Cache-Control: no-store
+
+└ Unknown route -> safe 404
+  GET https://localhost:8443/api/does-not-exist [404 Not Found, 988B, 15ms]
+  √  Status is 404
+  √  Error uses the standard safe shape
+
+└ Malformed JSON -> 400
+  POST https://localhost:8443/api/auth/login [400 Bad Request, 939B, 11ms]
+  √  Status is 400
+  √  Error uses the standard safe shape
+
+□ 7. Tax estimate (Part 3)
+└ Freelancer tax estimate -> 200
+  GET https://localhost:8443/api/income/tax-estimate [200 OK, 3.76kB, 18ms]
+  √  Status is 200
+  √  Uses net earnings this tax year (R900 after the refund)
+  √  Gross and platform fee for the year
+  √  Twelve months in the tax year
+  √  Tax year label like 2026/27
+  √  Below the threshold -> no tax
+  √  Two provisional tax payments
+  √  Calculation method and disclaimer explained
+
+└ Age group 65 to 74 adds the secondary rebate
+  GET https://localhost:8443/api/income/tax-estimate?ageGroup=65to74 [200 OK, 3.76kB, 19ms]
+  √  Status is 200
+  √  Rebate is larger than the primary rebate alone
+
+└ Invalid age group -> 400
+  GET https://localhost:8443/api/income/tax-estimate?ageGroup=everyone [400 Bad Request, 1.06kB, 17ms]
+  √  Status is 400
+  √  Field error for ageGroup
+
+└ Other freelancer sees only their own (zero) income
+  GET https://localhost:8443/api/income/tax-estimate [200 OK, 3.73kB, 17ms]
+  √  Status is 200
+  √  No income leaks between freelancers
+
+└ Client tax estimate -> 403
+  GET https://localhost:8443/api/income/tax-estimate [403 Forbidden, 998B, 16ms]
+  √  Status is 403
+
+└ Anonymous tax estimate -> 401
+  GET https://localhost:8443/api/income/tax-estimate [401 Unauthorized, 1.01kB, 10ms]
+  √  Status is 401
+
+□ 8. Part 3 security features
+└ Every response has an X-Request-Id
+  GET https://localhost:8443/api/health [200 OK, 923B, 10ms]
+  √  Status is 200
+  √  Request id header present
+
+└ Register lockout test user
+  POST https://localhost:8443/api/auth/register [201 Created, 1.21kB, 351ms]
+  √  Status is 201
+
+└ Wrong password until the account locks (4 x 401, then 423)
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 386ms]
+  √  Attempt 1: 401 invalid credentials
+  ┌
+  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
+  │ .execution.setNextRequest()" instead.'
+  └
+
+Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
+
+└ Wrong password until the account locks (4 x 401, then 423)
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 385ms]
+  √  Attempt 2: 401 invalid credentials
+  ┌
+  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
+  │ .execution.setNextRequest()" instead.'
+  └
+
+Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
+
+└ Wrong password until the account locks (4 x 401, then 423)
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 375ms]
+  √  Attempt 3: 401 invalid credentials
+  ┌
+  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
+  │ .execution.setNextRequest()" instead.'
+  └
+
+Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
+
+└ Wrong password until the account locks (4 x 401, then 423)
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 350ms]
+  √  Attempt 4: 401 invalid credentials
+  ┌
+  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
+  │ .execution.setNextRequest()" instead.'
+  └
+
+Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
+
+└ Wrong password until the account locks (4 x 401, then 423)
+  POST https://localhost:8443/api/auth/login [423 Locked, 1.04kB, 352ms]
+  √  5th failure locks the account: 423
+  √  Lockout message and Retry-After header
+
+└ Correct password while locked -> still 423 (no token)
+  POST https://localhost:8443/api/auth/login [423 Locked, 1.04kB, 12ms]
+  √  Status is 423
+  √  No token issued
+
+└ Login client again (second session)
+  POST https://localhost:8443/api/auth/login [200 OK, 1.57kB, 344ms]
+  √  Status is 200
+
+└ Second session works -> 200
+  GET https://localhost:8443/api/users/me [200 OK, 1.13kB, 13ms]
+  √  Status is 200
+
+└ Logout revokes that token -> 200
+  POST https://localhost:8443/api/auth/logout [200 OK, 965B, 22ms]
+  √  Status is 200
+
+└ Logged-out token is rejected -> 401
+  GET https://localhost:8443/api/users/me [401 Unauthorized, 995B, 14ms]
+  √  Status is 401
+  √  Session ended message
+
+└ Other sessions keep working -> 200
+  GET https://localhost:8443/api/users/me [200 OK, 1.13kB, 19ms]
+  √  Status is 200
+
+└ Client cannot revoke sessions -> 403
+  POST https://localhost:8443/api/admin/users/6acd8e2a7328430d0fdd75da/revoke-sessions [403 Forbidden, 998B, 11ms]
+  √  Status is 403
+
+└ Admin revokes all sessions of the second client -> 200
+  POST https://localhost:8443/api/admin/users/6acd8e2a7328430d0fdd75da/revoke-sessions [200 OK, 988B, 17ms]
+  √  Status is 200
+
+└ Second client's old token is rejected -> 401
+  GET https://localhost:8443/api/users/me [401 Unauthorized, 995B, 16ms]
+  √  Status is 401
+
+└ Prototype-pollution keys are stripped (no crash)
+  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 355ms]
+  √  Handled as a normal failed login (401), not a 500
+
+└ Admin security monitor shows the lockout -> 200
+  GET https://localhost:8443/api/admin/security-events?hours=1 [200 OK, 17.53kB, 37ms]
+  √  Status is 200
+  √  Failed logins counted
+  √  Account lock recorded
+  √  Recent events listed
+
+└ Freelancer cannot see security events -> 403
+  GET https://localhost:8443/api/admin/security-events [403 Forbidden, 998B, 21ms]
+  √  Status is 403
+
+┌─────────────────────────┬───────────────────┬───────────────────┐
+│                         │          executed │            failed │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              iterations │                 1 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│                requests │                91 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│            test-scripts │                91 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│      prerequest-scripts │                 3 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              assertions │               172 │                 0 │
+├─────────────────────────┴───────────────────┴───────────────────┤
+│ total run duration: 16.5s                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ total data received: 70.6kB (approx)                            │
+├─────────────────────────────────────────────────────────────────┤
+│ average response time: 98ms [min: 9ms, max: 977ms, s.d.: 165ms] │
+└─────────────────────────────────────────────────────────────────┘
+
+Reports written to postman\reports

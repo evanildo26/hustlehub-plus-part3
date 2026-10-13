@@ -1,0 +1,5 @@
+$ docker compose ps
+SERVICE   IMAGE                                                                     STATUS                    PORTS
+api       sha256:7806329609fab802599586e0b8289dc1d92b150ed4f4ed903d8203f901b74ed3   Up 16 minutes (healthy)   5000/tcp
+client    evanildo1997/hustlehub-client:local                                       Up 7 minutes (healthy)    0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp, 0.0.0.0:8443->8443/tcp, [::]:8443->8443/tcp
+mongo     mongo:7.0                                                                 Up 27 minutes (healthy)   27017/tcp
