@@ -137,3 +137,19 @@ describe('Public browsing', () => {
     expect((await request(app).get('/api/gigs/65a000000000000000000000')).status).toBe(404);
   });
 });
+
+describe('Price format (money amounts)', () => {
+  test.each([
+    ['1500', 201],
+    ['1500.5', 201],
+    ['1500.50', 201],
+    ['1e3', 400],
+    ['1500.505', 400],
+    ['12.', 400],
+    ['1.2.3', 400],
+  ])('price %s -> %i', async (price, status) => {
+    const { token } = await createUser('freelancer');
+    const res = await request(app).post('/api/gigs').set('Authorization', `Bearer ${token}`).send(validGig({ price }));
+    expect(res.status).toBe(status);
+  });
+});

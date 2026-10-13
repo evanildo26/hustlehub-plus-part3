@@ -12,6 +12,20 @@ const { sanitizeText } = require('../../utils/sanitize');
 
 const GIG_FIELDS = ['title', 'description', 'category', 'price', 'deliveryDays', 'isActive']; // Everything a freelancer may set.
 
+/**
+ * "1500", "1500.5" and "1500.50" pass; "1e3", "1500.505", "12." and " 12" fail.
+ * Two simple checks instead of one regex with nested quantifiers - static
+ * analysis (security/detect-unsafe-regex) flags those as a ReDoS risk.
+ */
+function isMoneyAmount(value) {
+  const parts = String(value).split('.');
+  if (parts.length > 2) return false;
+  const [whole, decimals] = parts;
+  const wholeOk = /^\d{1,6}$/.test(whole);
+  const decimalsOk = decimals === undefined || /^\d{1,2}$/.test(decimals);
+  return wholeOk && decimalsOk;
+}
+
 /** Builds the rule set; `optional` = true for PATCH (partial updates). */
 function gigRules({ optional }) {
   const field = (name) => (optional ? body(name).optional() : body(name).exists().withMessage(`${name} is required`).bail());
@@ -46,7 +60,7 @@ function gigRules({ optional }) {
       .isFloat({ min: PRICE_MIN, max: PRICE_MAX })
       .withMessage(`Price must be a number between ${PRICE_MIN} and ${PRICE_MAX}`)
       .bail()
-      .custom((v) => /^\d+(\.\d{1,2})?$/.test(String(v))) // Money: at most two decimal places, no exponent notation.
+      .custom(isMoneyAmount) // Money: at most two decimal places, no exponent notation.
       .withMessage('Price may have at most two decimal places')
       .toFloat(),
 
@@ -62,7 +76,7 @@ function gigRules({ optional }) {
 const createGigRules = gigRules({ optional: false });
 const updateGigRules = [
   ...gigRules({ optional: true }),
-  body().custom((value) => GIG_FIELDS.some((f) => value && value[f] !== undefined)).withMessage('Provide at least one field to update'),
+  body().custom((value) => Boolean(value) && Object.keys(value).some((key) => GIG_FIELDS.includes(key))).withMessage('Provide at least one field to update'),
 ];
 
 /** Query-string rules for browsing: everything is optional and bounded. */
