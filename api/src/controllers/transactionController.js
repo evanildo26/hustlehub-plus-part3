@@ -9,6 +9,7 @@
 const mongoose = require('mongoose');
 const Transaction = require('../models/transactionModel');
 const Booking = require('../models/bookingModel');
+const { buildTaxEstimate, taxYearFor } = require('../services/taxService');
 
 /** Same scoping rule as bookings: you only see records you are a party to. */
 function scopeForUser(user) {
@@ -103,4 +104,29 @@ async function getIncomeSummary(req, res, next) {
   }
 }
 
-module.exports = { listTransactions, getIncomeSummary };
+// GET /api/income/tax-estimate?ageGroup= - freelancer only. Logic lives in services/taxService.js.
+async function getTaxEstimate(req, res, next) {
+  try {
+    const now = new Date();
+    const taxYear = taxYearFor(now);
+
+    // Net earnings per calendar month inside the current SA tax year (1 March - end of February).
+    const monthlyNet = await Transaction.aggregate([
+      {
+        $match: {
+          freelancer: new mongoose.Types.ObjectId(req.user.id),
+          createdAt: { $gte: taxYear.start, $lt: taxYear.end },
+        },
+      },
+      { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, netIncome: { $sum: '$freelancerEarnings' } } },
+      { $project: { _id: 0, month: '$_id', netIncome: 1 } },
+    ]);
+
+    const estimate = buildTaxEstimate({ monthlyNet, now, ageGroup: req.query.ageGroup || 'under65' });
+    return res.status(200).json({ success: true, data: estimate });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { listTransactions, getIncomeSummary, getTaxEstimate };
