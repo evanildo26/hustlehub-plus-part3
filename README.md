@@ -399,7 +399,11 @@ Shipping to Better Stack is **batched** (50 entries or every 2 s), never blocks 
 4. Useful saved searches: `level:"security"`, `event:"SECURITY_ALERT"`, `status>=500`, or `requestId:"<id>"` for one request's full story.
 5. Create an **alert** on `event:"SECURITY_ALERT"` (or on more than 0 `level:"error"` in 5 minutes) to get an email when an attack pattern is detected.
 
-Evidence: [`docs/screenshots/part3`](docs/screenshots/part3) (Security monitor and Better Stack) and [`docs/evidence/part3/api-events-log-sample.txt`](docs/evidence/part3/api-events-log-sample.txt) (raw JSON lines from the API container).
+**Better Stack Live tail** for the `HustleHub+ API` source, showing a brute-force attempt end to end: `LOGIN_FAILED` → `ACCOUNT_LOCKED` → `SECURITY_ALERT` → `LOGIN_BLOCKED_LOCKED` (423), followed by a `LOGOUT` and the `REVOKED_TOKEN_USED` rejection of the logged-out token:
+
+![Better Stack Live tail](docs/screenshots/part3/11-better-stack-logs.png)
+
+More evidence: the admin Security monitor ([`07-admin-security-monitor.png`](docs/screenshots/part3/07-admin-security-monitor.png)) and [`docs/evidence/part3/api-events-log-sample.txt`](docs/evidence/part3/api-events-log-sample.txt) (raw JSON lines from the API container).
 
 ---
 
@@ -665,6 +669,7 @@ How HustleHub+ addresses common threats, mapped to the OWASP Top 10 (2021) [3].
 | How the tax is calculated ![Calculation](docs/screenshots/part3/03-tax-calculation-explained.png) | Where payments go + provisional tax ![Split](docs/screenshots/part3/04-income-split-and-provisional-tax.png) |
 | Account lockout (423) ![Lockout](docs/screenshots/part3/06-account-lockout.png) | Admin Security monitor with alerts ![Monitor](docs/screenshots/part3/07-admin-security-monitor.png) |
 | Admin revokes a user's sessions ![Revoke](docs/screenshots/part3/08-admin-revoke-sessions.png) | Dashboard on a phone ![Mobile](docs/screenshots/part3/05-earnings-mobile.png) |
+| Cloud logs in Better Stack (Live tail) ![Better Stack](docs/screenshots/part3/11-better-stack-logs.png) | GitHub Actions pipeline, all jobs green ![Pipeline](docs/screenshots/part3/09-github-actions-pipeline.png) |
 
 Pipeline, Docker, scanning and logging evidence:
 
@@ -672,7 +677,7 @@ Pipeline, Docker, scanning and logging evidence:
 |---|---|
 | GitHub Actions run (all jobs green) | `docs/screenshots/part3/09-github-actions-pipeline.png` |
 | Containers running and healthy | `docs/screenshots/part3/10-docker-compose-running.png`, `docs/evidence/part3/docker-compose-ps.txt` |
-| Better Stack live tail and alert rule | `docs/screenshots/part3/11-better-stack-logs.png` (captured from the team Better Stack account) |
+| Better Stack Live tail (cloud logging) | `docs/screenshots/part3/11-better-stack-logs.png` |
 | CodeQL results (13 alerts: 10 fixed, 3 reviewed and dismissed, 0 open) | `docs/evidence/part3/codeql-alerts.txt` and the repository Security → Code scanning tab |
 | Newman (Docker stack) | `docs/evidence/part3/newman-report.html`, `newman-cli-output.txt` |
 | OWASP ZAP report | `docs/evidence/part3/zap-report.html` |
