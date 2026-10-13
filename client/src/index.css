@@ -372,6 +372,81 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-siz
 .footer__links a:hover { color: #fff; }
 .footer__bottom { border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center; padding: 1rem 1.25rem; font-size: 0.82rem; }
 
+
+/* ---------- Earnings & tax dashboard (charts) ----------
+ * Series colours were checked with a colour-vision-deficiency validator
+ * (all adjacent pairs pass on the white card surface). Text never uses the
+ * series colours - identity comes from the swatch next to it. */
+:root {
+  --series-takehome: #14948a;
+  --series-tax: #eb6834;
+  --series-fee: #6250d6;
+  --chart-grid: #e8edf3;
+  --chart-baseline: #cbd5e1;
+}
+.two-col--even { grid-template-columns: 1fr 1fr; }
+.field--inline { flex-direction: row; align-items: center; gap: 0.6rem; }
+.field--inline label { white-space: nowrap; }
+.field--inline select { width: auto; padding: 0.5rem 0.75rem; }
+.earnings__body { display: flex; flex-direction: column; gap: 1.1rem; transition: opacity 0.2s; }
+.earnings__body.is-refreshing { opacity: 0.55; }
+.earnings .stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+.tax-hero { border-left: 4px solid var(--series-tax); }
+.tax-hero__label { margin: 0; color: var(--muted); font-weight: 650; font-size: 0.9rem; }
+.tax-hero__value { margin: 0.1rem 0 0.35rem; font-family: var(--font-display); font-size: clamp(2.4rem, 5vw, 3.2rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+
+.chart { margin: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.chart__legend { display: flex; gap: 1.1rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-soft); }
+.legend-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+.legend-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+.legend-swatch--takehome { background: var(--series-takehome); }
+.legend-swatch--tax { background: var(--series-tax); }
+.legend-swatch--fee { background: var(--series-fee); }
+.chart__plot { position: relative; }
+.chart__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart__grid { stroke: var(--chart-grid); stroke-width: 1; }
+.chart__baseline { stroke: var(--chart-baseline); stroke-width: 1; }
+.chart__tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.chart__value { fill: var(--text-soft); font-size: 11px; font-weight: 700; }
+.chart__bar--takehome { fill: var(--series-takehome); }
+.chart__bar--tax { fill: var(--series-tax); }
+.chart__bar--fee { fill: var(--series-fee); }
+.chart__hit { fill: transparent; }
+.chart__col { cursor: default; outline: none; }
+.chart__col.is-active .chart__hit, .chart__col:focus-visible .chart__hit { fill: rgba(15, 23, 42, 0.04); }
+.chart__col.is-active .chart__bar { filter: brightness(1.08); }
+.chart__col.is-future .chart__tick { fill: #b6c0cc; }
+.chart__tooltip { position: absolute; top: 0; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); padding: 0.55rem 0.75rem; font-size: 0.82rem; pointer-events: none; min-width: 170px; z-index: 2; }
+.chart__tooltip p { margin: 0.1rem 0; display: flex; align-items: center; gap: 0.4rem; }
+.chart__tooltip-title { font-weight: 700; color: var(--text); }
+.tooltip-key { display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
+.tooltip-key--takehome { background: var(--series-takehome); }
+.tooltip-key--tax { background: var(--series-tax); }
+.chart__footer { display: flex; justify-content: flex-end; }
+
+.split__svg { display: block; width: 100%; height: 24px; }
+.split__legend { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.split__legend li { display: flex; align-items: center; gap: 0.55rem; }
+.split__label { flex: 1; color: var(--text-soft); }
+.split__legend strong { font-variant-numeric: tabular-nums; }
+
+.schedule { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.schedule li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0.9rem; border: 1px solid var(--border); border-radius: 10px; }
+.schedule li > span { display: flex; flex-direction: column; }
+.schedule li > strong { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+
+.brackets { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+.brackets__row { display: grid; grid-template-columns: 3rem 7.5rem 1fr; grid-template-areas: "rate range track" ". value value"; column-gap: 0.6rem; row-gap: 0.15rem; align-items: center; padding: 0.45rem 0.5rem; border-radius: 10px; }
+.brackets__row.is-current { background: var(--surface-alt); }
+.brackets__rate { grid-area: rate; font-weight: 800; font-variant-numeric: tabular-nums; }
+.brackets__range { grid-area: range; font-variant-numeric: tabular-nums; }
+.brackets__track { grid-area: track; height: 12px; background: var(--chart-grid); border-radius: 4px; overflow: hidden; }
+.brackets__bar { display: block; height: 100%; background: var(--series-takehome); border-radius: 0 4px 4px 0; }
+.brackets__value { grid-area: value; color: var(--text-soft); }
+.brackets__badge { grid-area: value; justify-self: end; background: var(--primary-soft); color: var(--primary); text-transform: none; }
+.method { margin: 0 0 0.9rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.45rem; color: var(--text-soft); font-size: 0.92rem; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
   .nav__toggle { display: inline-flex; }
@@ -383,7 +458,7 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-siz
   .hero { grid-template-columns: 1fr; }
   .hero__stats { flex-direction: row; flex-wrap: wrap; }
   .hero__stats li { min-width: 0; flex: 1 1 150px; }
-  .detail, .two-col { grid-template-columns: 1fr; }
+  .detail, .two-col, .two-col--even { grid-template-columns: 1fr; }
   .detail__side { position: static; }
   .auth { grid-template-columns: 1fr; }
   .auth__panel { display: none; }
