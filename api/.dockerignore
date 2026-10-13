@@ -1,0 +1,14 @@
+# Keep secrets, local state and dev-only files out of the image build context.
+node_modules
+.env
+.env.*
+!.env.example
+certs
+src/logs/*.log
+src/data
+tests
+postman
+coverage
+*.md
+Dockerfile
+.dockerignore
