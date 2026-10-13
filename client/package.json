@@ -28,7 +28,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.1.2",
     "oxlint": "^1.81.0",
-    "vite": "^8.3.0",
+    "vite": "^8.3.4",
     "vitest": "^4.1.11"
   },
   "description": "HustleHub+ React frontend - Part 2: Secure Stack (INSY7314/APDS7311 POE)"
