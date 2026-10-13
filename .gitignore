@@ -35,3 +35,6 @@ test-results/
 eslint-report.json
 semgrep.sarif
 gitleaks-report.json
+.zap/zap.yaml
+.zap/*.html
+.zap/*.json
