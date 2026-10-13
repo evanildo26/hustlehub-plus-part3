@@ -41,7 +41,7 @@ const WINDOWS = [
 function describe(e) {
   const d = e.details || {};
   if (e.event === 'SECURITY_ALERT') return `${PATTERN_LABELS[d.pattern] || d.pattern} · ${d.eventCount} events in ${d.windowMinutes} min`;
-  const parts = [d.email, d.reason && d.reason.replaceAll('_', ' '), d.limiter && `${d.limiter} limiter`, d.required && `needs ${[].concat(d.required).join('/')}`, d.path || e.path];
+  const parts = [d.email, d.role && `as ${d.role}`, d.reason && d.reason.replaceAll('_', ' '), d.limiter && `${d.limiter} limiter`, d.required && `needs ${[].concat(d.required).join('/')}`, d.path || e.path];
   return parts.filter(Boolean).join(' · ');
 }
 
