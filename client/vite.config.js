@@ -57,6 +57,8 @@ function securityHeaders({ dev }) {
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()', // The app needs none of these browser features.
     'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Embedder-Policy': 'require-corp', // Only same-origin resources may be embedded.
+    'Cross-Origin-Resource-Policy': 'same-origin',
   };
 }
 
