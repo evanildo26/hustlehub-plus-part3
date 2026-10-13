@@ -23,8 +23,8 @@ export const formatCompactCurrency = (value) => `R${compactNumber.format(Number(
 /** 0.1352 -> "13.5%" */
 export const formatPercent = (ratio, digits = 1) => `${((Number(ratio) || 0) * 100).toFixed(digits)}%`;
 
-/** "2026-10" -> "Oct" (chart axis label) */
-export const formatMonthShort = (yyyyMm) => {
+/** "2026-10" -> "Oct", or "O" when `narrow` (chart axis labels on small screens) */
+export const formatMonthShort = (yyyyMm, narrow = false) => {
   const [y, m] = yyyyMm.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleString('en-ZA', { month: 'short' });
+  return new Date(y, m - 1, 1).toLocaleString('en-ZA', { month: narrow ? 'narrow' : 'short' });
 };

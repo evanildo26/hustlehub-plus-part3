@@ -120,6 +120,7 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-siz
 .card > h2 { margin-bottom: 0.9rem; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 1.25rem; }
 .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 1.1rem; align-items: start; }
+.two-col > * { min-width: 0; } /* Let wide tables scroll inside their card instead of stretching the grid on phones. */
 
 /* ---------- Category colours (covers, icons, tags) ---------- */
 .cover--design { background: linear-gradient(135deg, #fdf2f8, #fbcfe8); color: #be185d; }
@@ -437,14 +438,14 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-siz
 .schedule li > strong { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
 
 .brackets { list-style: none; margin: 0 0 0.75rem; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
-.brackets__row { display: grid; grid-template-columns: 3rem 7.5rem 1fr; grid-template-areas: "rate range track" ". value value"; column-gap: 0.6rem; row-gap: 0.15rem; align-items: center; padding: 0.45rem 0.5rem; border-radius: 10px; }
+.brackets__row { display: grid; grid-template-columns: 3rem 8.5rem 1fr; grid-template-areas: "rate range track" ". value value" ". badge badge"; column-gap: 0.6rem; row-gap: 0.15rem; align-items: center; padding: 0.45rem 0.5rem; border-radius: 10px; }
 .brackets__row.is-current { background: var(--surface-alt); }
 .brackets__rate { grid-area: rate; font-weight: 800; font-variant-numeric: tabular-nums; }
-.brackets__range { grid-area: range; font-variant-numeric: tabular-nums; }
+.brackets__range { grid-area: range; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .brackets__track { grid-area: track; height: 12px; background: var(--chart-grid); border-radius: 4px; overflow: hidden; }
 .brackets__bar { display: block; height: 100%; background: var(--series-takehome); border-radius: 0 4px 4px 0; }
 .brackets__value { grid-area: value; color: var(--text-soft); }
-.brackets__badge { grid-area: value; justify-self: end; background: var(--primary-soft); color: var(--primary); text-transform: none; }
+.brackets__badge { grid-area: badge; justify-self: start; background: var(--primary-soft); color: var(--primary); text-transform: none; }
 .method { margin: 0 0 0.9rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.45rem; color: var(--text-soft); font-size: 0.92rem; }
 
 /* ---------- Responsive ---------- */

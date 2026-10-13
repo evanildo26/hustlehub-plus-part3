@@ -182,7 +182,7 @@ export default function EarningsPage() {
             <div className="card">
               <h2>Top gigs</h2>
               <ol className="top-list">
-                {summary.topGigs.map((g) => (
+                {summary.topGigs.filter((g) => g.netIncome > 0).map((g) => (
                   <li key={g.gigId}>
                     <span>{g.gigTitle}</span>
                     <strong>{formatCurrency(g.netIncome)}</strong>

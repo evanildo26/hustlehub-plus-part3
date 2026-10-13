@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatCompactCurrency, formatCurrency, formatMonth, formatMonthShort } from '../../utils/format';
 
 /**
@@ -10,12 +10,12 @@ import { formatCompactCurrency, formatCurrency, formatMonth, formatMonthShort } 
  * positions are SVG attributes, so it works under the strict production
  * CSP (style-src 'self'). The tooltip is positioned through React's style
  * prop, which writes to the CSSOM and is not affected by CSP.
+ *
+ * The SVG is drawn at the container's real pixel width (measured with a
+ * ResizeObserver) rather than scaled, so labels stay readable on a phone
+ * and columns keep their 24px cap on a wide screen.
  */
-const W = 720;
-const H = 260;
 const M = { top: 22, right: 8, bottom: 28, left: 52 };
-const PLOT_W = W - M.left - M.right;
-const PLOT_H = H - M.top - M.bottom;
 const GAP = 2; // Surface gap between stacked segments.
 const RADIUS = 4; // Rounded data-end, square at the baseline.
 
@@ -42,14 +42,33 @@ function columnPath(x, y, w, h, roundTop) {
   ].join(' ');
 }
 
+/** Width of the element in CSS pixels, kept up to date as it resizes. */
+function useWidth(fallback) {
+  const ref = useRef(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined; // jsdom/old browsers: keep the fallback width.
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(280, Math.round(entry.contentRect.width))));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width];
+}
+
 export default function MonthlyTaxChart({ months }) {
   const [active, setActive] = useState(null);
   const [showTable, setShowTable] = useState(false);
+  const [plotRef, W] = useWidth(720);
+  const H = W < 520 ? 220 : 260;
+  const PLOT_W = W - M.left - M.right;
+  const PLOT_H = H - M.top - M.bottom;
 
   const yMax = niceMax(Math.max(...months.map((m) => m.netIncome), 0));
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * yMax);
   const band = PLOT_W / months.length;
   const barW = Math.min(24, band * 0.6);
+  const narrowLabels = band < 38; // "Sept" at 11px needs ~30px; below that use J F M A ... initials.
   const y = (v) => M.top + PLOT_H - (Math.max(0, v) / yMax) * PLOT_H;
 
   const peak = months.reduce((best, m, i) => (m.netIncome > (best === null ? 0 : months[best].netIncome) ? i : best), null);
@@ -68,8 +87,8 @@ export default function MonthlyTaxChart({ months }) {
         </span>
       </div>
 
-      <div className="chart__plot">
-        <svg viewBox={`0 0 ${W} ${H}`} className="chart__svg" role="img" aria-label="Monthly net income split into take-home pay and estimated tax for this tax year">
+      <div className="chart__plot" ref={plotRef}>
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="chart__svg" role="img" aria-label="Monthly net income split into take-home pay and estimated tax for this tax year">
           {ticks.map((t) => (
             <g key={t}>
               <line className="chart__grid" x1={M.left} x2={W - M.right} y1={y(t)} y2={y(t)} />
@@ -109,7 +128,7 @@ export default function MonthlyTaxChart({ months }) {
                   </text>
                 )}
                 <text className="chart__tick" x={cx} y={H - 8} textAnchor="middle">
-                  {formatMonthShort(m.month)}
+                  {formatMonthShort(m.month, narrowLabels)}
                 </text>
               </g>
             );
