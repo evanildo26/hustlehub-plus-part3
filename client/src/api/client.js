@@ -99,6 +99,7 @@ export const api = {
   // Money
   listTransactions: () => apiRequest('/transactions'),
   incomeSummary: () => apiRequest('/income/summary'),
+  taxEstimate: (ageGroup) => apiRequest(`/income/tax-estimate${query({ ageGroup })}`),
 
   // Admin
   adminStats: () => apiRequest('/admin/stats'),

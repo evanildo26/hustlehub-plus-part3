@@ -14,3 +14,17 @@ export const formatMonth = (yyyyMm) => {
 };
 
 export const capitalise = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+
+const compactNumber = new Intl.NumberFormat('en-ZA', { notation: 'compact', maximumFractionDigits: 1 });
+
+/** Axis-friendly money: R0, R950, R12.5K, R1.2M */
+export const formatCompactCurrency = (value) => `R${compactNumber.format(Number(value) || 0)}`;
+
+/** 0.1352 -> "13.5%" */
+export const formatPercent = (ratio, digits = 1) => `${((Number(ratio) || 0) * 100).toFixed(digits)}%`;
+
+/** "2026-10" -> "Oct" (chart axis label) */
+export const formatMonthShort = (yyyyMm) => {
+  const [y, m] = yyyyMm.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleString('en-ZA', { month: 'short' });
+};
