@@ -1,0 +1,4 @@
+# Reviewed Gitleaks false positives (one fingerprint per line: commit:file:rule:line).
+# generic-api-key matched a Docker image digest (sha256:...) in saved `docker compose ps` output.
+# An image digest is a public content hash, not a credential. The file was later regenerated.
+e463bf6bc3681bad6bd13fac713a601ad7807361:docs/evidence/part3/docker-compose-ps.txt:generic-api-key:3
