@@ -69,4 +69,16 @@ describe('LoginPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/Too many failed login attempts/);
   });
+
+  test('shows the account-lockout message (423) and clears the password', async () => {
+    login.mockRejectedValue(new ApiError('Too many failed login attempts for this account. Please try again in 15 minutes.', 423));
+    renderLogin();
+
+    await userEvent.type(screen.getByLabelText('Email'), 'thandiwe@example.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'WrongPass1!');
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('for this account. Please try again in 15 minutes.');
+    expect(screen.getByLabelText('Password')).toHaveValue('');
+  });
 });
