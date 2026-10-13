@@ -1,0 +1,5 @@
+# OWASP ZAP baseline rule overrides (used by the CI pipeline).
+# Format: <rule id>	<IGNORE|WARN|FAIL>	(reason)
+10049	IGNORE	(Storable and Cacheable Content: fingerprinted /assets/ files are meant to be cached for a year; HTML and API responses are no-store)
+10027	IGNORE	(Information Disclosure - Suspicious Comments: matches words inside the minified React/third-party bundle; reviewed, no secrets or internal details)
+10109	IGNORE	(Modern Web Application: informational only)
