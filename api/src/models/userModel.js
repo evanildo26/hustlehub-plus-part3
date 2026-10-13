@@ -26,6 +26,9 @@ const userSchema = new mongoose.Schema(
       select: false, // The bcrypt hash is excluded from every query unless explicitly requested with .select('+password').
     },
     role: { type: String, enum: ROLES, default: 'client' },
+    // Bumped to revoke every token issued so far (admin 'revoke sessions').
+    // Each JWT carries the version it was issued with; protect() rejects older ones.
+    tokenVersion: { type: Number, default: 0, select: false },
   },
   {
     timestamps: true, // Adds createdAt / updatedAt automatically.

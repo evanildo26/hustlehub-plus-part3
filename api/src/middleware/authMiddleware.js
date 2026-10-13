@@ -5,7 +5,9 @@
  *   1. Reads the token from the `Authorization: Bearer <token>` header.
  *   2. Verifies its signature and expiry against JWT_SECRET.
  *   3. Confirms the user referenced by the token still exists.
- *   4. Attaches a minimal `req.user` object for downstream handlers.
+ *   4. Rejects tokens that were revoked: logged out (jti on the deny-list)
+ *      or issued before an admin revoked the user's sessions (tokenVersion).
+ *   5. Attaches a minimal `req.user` object for downstream handlers.
  *
  * This means the token is validated on EVERY protected request (not just
  * checked for presence) - a forged, tampered, or expired token is
@@ -21,6 +23,51 @@ const { verifyToken } = require('../utils/jwt'); // Our wrapper around jsonwebto
 const AppError = require('../utils/AppError'); // Operational-error class for controlled 401/403 responses.
 const logger = require('../utils/logger'); // Structured logger, used to record suspicious/invalid token attempts.
 const User = require('../models/userModel'); // Used to confirm the user referenced by the token still exists.
+const RevokedToken = require('../models/revokedTokenModel'); // Deny-list of logged-out tokens.
+const { setUser } = require('../utils/requestContext'); // Stamps the user id on every later log line of this request.
+
+const SESSION_ENDED = 'Your session has ended. Please log in again.';
+
+/**
+ * Shared token check for protect and optionalAuth. Resolves to
+ * { user, claims } or throws an AppError(401). `reason` is logged
+ * server-side only; every failure looks the same to the client.
+ */
+async function authenticate(token, req) {
+  let claims;
+  try {
+    claims = verifyToken(token); // Signature, algorithm, expiry, issuer, audience.
+  } catch (err) {
+    logger.security('INVALID_TOKEN_ATTEMPT', { path: req.originalUrl, reason: err.name });
+    throw new AppError('Invalid or expired session. Please log in again.', 401);
+  }
+  if (!claims.jti) {
+    // Tokens from before Part 3 have no id and can't be revoked - don't accept them.
+    logger.security('INVALID_TOKEN_ATTEMPT', { path: req.originalUrl, reason: 'missing_jti' });
+    throw new AppError('Invalid or expired session. Please log in again.', 401);
+  }
+
+  const [user, revoked] = await Promise.all([
+    User.findById(claims.id).select('+tokenVersion').lean(), // Re-check the user still exists (e.g. wasn't deleted).
+    RevokedToken.exists({ jti: claims.jti }),
+  ]);
+  if (!user) throw new AppError('The user belonging to this token no longer exists.', 401);
+
+  if (revoked || (claims.tv || 0) !== (user.tokenVersion || 0)) {
+    logger.security('REVOKED_TOKEN_USED', {
+      userId: user._id.toString(),
+      path: req.originalUrl,
+      reason: revoked ? 'logged_out' : 'sessions_revoked',
+    });
+    throw new AppError(SESSION_ENDED, 401);
+  }
+  return { user, claims };
+}
+
+/** Minimal, non-sensitive user context. The role comes from the DATABASE, not the token. */
+function toRequestUser(user) {
+  return { id: user._id.toString(), role: user.role, email: user.email, name: user.name };
+}
 
 async function protect(req, res, next) {
   // Express middleware signature: (request, response, next-function).
@@ -33,28 +80,13 @@ async function protect(req, res, next) {
       throw new AppError('You are not logged in. Please log in to access this resource.', 401);
     }
 
-    let decoded;
-    try {
-      decoded = verifyToken(token); // Verify signature + expiry; throws if either check fails.
-    } catch (err) {
-      // Covers expired tokens, tampered signatures, and malformed tokens -
-      // all treated the same way from the client's perspective.
-      logger.security('INVALID_TOKEN_ATTEMPT', {
-        path: req.originalUrl, // Which endpoint was being accessed.
-        reason: err.name, // e.g. 'TokenExpiredError', 'JsonWebTokenError' - useful server-side, not sent to the client.
-      });
-      throw new AppError('Invalid or expired session. Please log in again.', 401); // Generic message - doesn't reveal *why* it failed.
-    }
+    const { user, claims } = await authenticate(token, req);
 
-    const user = await User.findById(decoded.id).lean(); // Re-check the user still exists (e.g. wasn't deleted after the token was issued).
-    if (!user) {
-      throw new AppError('The user belonging to this token no longer exists.', 401);
-    }
-
-    // Minimal, non-sensitive user context for the rest of the request. The
-    // role comes from the DATABASE, not the token, so a role change takes
-    // effect immediately rather than when the old token expires.
-    req.user = { id: user._id.toString(), role: user.role, email: user.email, name: user.name }; // Never the password hash.
+    // The role comes from the DATABASE, not the token, so a role change
+    // takes effect immediately rather than when the old token expires.
+    req.user = toRequestUser(user); // Never the password hash.
+    req.auth = { jti: claims.jti, exp: claims.exp }; // Needed by logout to revoke this exact token.
+    setUser(req.user.id, req.user.role);
     next(); // Validation passed - continue to the next middleware/controller.
   } catch (err) {
     next(err); // Forward any thrown error to the central error handler instead of letting it crash the request.
@@ -89,11 +121,11 @@ async function optionalAuth(req, res, next) {
   const [scheme, token] = (req.headers.authorization || '').split(' ');
   if (scheme !== 'Bearer' || !token) return next();
   try {
-    const decoded = verifyToken(token);
-    const user = await User.findById(decoded.id).lean();
-    if (user) req.user = { id: user._id.toString(), role: user.role, email: user.email, name: user.name };
+    const { user } = await authenticate(token, req);
+    req.user = toRequestUser(user);
+    setUser(req.user.id, req.user.role);
   } catch {
-    // Invalid/expired token on a public route: continue as anonymous.
+    // Invalid, expired or revoked token on a public route: continue as anonymous.
   }
   return next();
 }
