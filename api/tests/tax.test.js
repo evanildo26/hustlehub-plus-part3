@@ -108,6 +108,7 @@ describe('GET /api/income/tax-estimate', () => {
     const res = await request(app).get('/api/income/tax-estimate').set(auth(freelancer.token));
     expect(res.status).toBe(200);
     expect(res.body.data.ytdIncome).toBe(900); // 1000 less the 10% platform fee
+    expect(res.body.data).toMatchObject({ ytdGross: 1000, ytdPlatformFees: 100 });
     expect(res.body.data.months).toHaveLength(12);
     expect(res.body.data.disclaimer).toMatch(/estimate/i);
 

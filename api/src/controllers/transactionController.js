@@ -118,8 +118,15 @@ async function getTaxEstimate(req, res, next) {
           createdAt: { $gte: taxYear.start, $lt: taxYear.end },
         },
       },
-      { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, netIncome: { $sum: '$freelancerEarnings' } } },
-      { $project: { _id: 0, month: '$_id', netIncome: 1 } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          grossIncome: { $sum: '$amount' },
+          platformFees: { $sum: '$platformFee' },
+          netIncome: { $sum: '$freelancerEarnings' },
+        },
+      },
+      { $project: { _id: 0, month: '$_id', grossIncome: 1, platformFees: 1, netIncome: 1 } },
     ]);
 
     const estimate = buildTaxEstimate({ monthlyNet, now, ageGroup: req.query.ageGroup || 'under65' });

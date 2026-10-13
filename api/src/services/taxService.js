@@ -145,8 +145,8 @@ function monthsElapsed(taxYear, now) {
 
 /**
  * Builds the full estimate from a freelancer's net earnings per month of the
- * tax year. `monthlyNet` is [{ month: 'YYYY-MM', netIncome }] (any order,
- * months with no income may be omitted).
+ * tax year. `monthlyNet` is [{ month: 'YYYY-MM', netIncome, grossIncome?, platformFees? }]
+ * (any order, months with no income may be omitted).
  */
 function buildTaxEstimate({ monthlyNet, now = new Date(), ageGroup = 'under65' }) {
   const taxYear = taxYearFor(now);
@@ -154,7 +154,8 @@ function buildTaxEstimate({ monthlyNet, now = new Date(), ageGroup = 'under65' }
   const elapsed = monthsElapsed(taxYear, now);
 
   const byMonth = new Map(monthlyNet.map((m) => [m.month, m.netIncome]));
-  const ytdIncome = round2(monthlyNet.reduce((sum, m) => sum + m.netIncome, 0));
+  const total = (key) => round2(monthlyNet.reduce((sum, m) => sum + (m[key] || 0), 0));
+  const ytdIncome = total('netIncome');
   const projectedAnnualIncome = round2((ytdIncome / elapsed) * 12);
 
   const annual = calculateAnnualTax(projectedAnnualIncome, table, ageGroup);
@@ -189,6 +190,8 @@ function buildTaxEstimate({ monthlyNet, now = new Date(), ageGroup = 'under65' }
       monthsElapsed: elapsed,
     },
     ageGroup,
+    ytdGross: total('grossIncome'), // What clients paid this tax year (net of refunds).
+    ytdPlatformFees: total('platformFees'),
     ytdIncome,
     projectedAnnualIncome,
     estimatedAnnualTax: annual.tax,
