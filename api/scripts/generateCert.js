@@ -21,12 +21,6 @@ const CERT_DIR = path.join(__dirname, '..', 'certs'); // certs/ folder at the pr
 const KEY_PATH = path.join(CERT_DIR, 'key.pem'); // Where the private key will be written.
 const CERT_PATH = path.join(CERT_DIR, 'cert.pem'); // Where the public certificate will be written.
 
-if (fs.existsSync(KEY_PATH) && fs.existsSync(CERT_PATH)) {
-  // Avoid silently overwriting an existing certificate every time this script runs.
-  console.log('Certificate already exists at certs/. Delete that folder first to regenerate.');
-  process.exit(0); // Exit code 0 = "nothing went wrong", just nothing to do.
-}
-
 const attrs = [{ name: 'commonName', value: 'localhost' }]; // The certificate's subject - identifies it as being "for" localhost.
 const pems = selfsigned.generate(attrs, {
   days: 365, // How long the certificate is valid for (1 year) before it needs regenerating.
@@ -54,8 +48,21 @@ const pems = selfsigned.generate(attrs, {
 });
 
 fs.mkdirSync(CERT_DIR, { recursive: true }); // Create certs/ (and any missing parent folders) if it doesn't already exist.
-fs.writeFileSync(KEY_PATH, pems.private); // Save the generated private key to disk.
-fs.writeFileSync(CERT_PATH, pems.cert); // Save the generated public certificate to disk.
+
+// 'wx' creates each file only if it does NOT exist yet, as one atomic step, so
+// an existing certificate is never overwritten and there is no gap between
+// "check" and "write" (CodeQL js/file-system-race). The private key is
+// readable by its owner only (0600).
+try {
+  fs.writeFileSync(KEY_PATH, pems.private, { flag: 'wx', mode: 0o600 });
+  fs.writeFileSync(CERT_PATH, pems.cert, { flag: 'wx', mode: 0o644 });
+} catch (err) {
+  if (err.code === 'EEXIST') {
+    console.log('Certificate already exists at certs/. Delete that folder first to regenerate.');
+    process.exit(0); // Exit code 0 = "nothing went wrong", just nothing to do.
+  }
+  throw err;
+}
 
 console.log('Self-signed certificate generated:'); // Confirm success to whoever ran the script.
 console.log(`  ${KEY_PATH}`); // Show where the key ended up.
