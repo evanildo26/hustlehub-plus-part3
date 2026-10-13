@@ -1,11 +1,12 @@
 /**
  * Seeds demo data for screenshots / the demonstration video: freelancers
- * across every category, 27 gigs, two clients, and a handful of sample
+ * across every category, 29 gigs, two clients, and a year of sample
  * bookings (with their payment/refund transactions) spread over the last
  * few months so the Earnings, Bookings and Admin pages have data.
  *
  * Safe to run repeatedly - accounts and gigs are only created once, and
- * sample bookings are only added if the demo clients have none yet.
+ * each sample booking is only added if that client hasn't already booked
+ * that gig with the same notes.
  * Bookings go through bookingService, so they create real transaction
  * records exactly like the app does.
  *
@@ -33,6 +34,8 @@ const FREELANCERS = [
       ['Modern logo and brand identity pack', 'Three logo concepts, two revision rounds, a colour palette and a font pairing guide, delivered as SVG and PNG files ready for print and web.', 'design', 1500, 5],
       ['Social media graphics bundle (15 posts)', 'Fifteen on-brand Instagram and Facebook post designs in Canva and PNG formats, including editable templates you can reuse.', 'design', 950, 4],
       ['Business card and letterhead design', 'Print-ready business card and letterhead designs that match your brand, with bleed and crop marks for any South African printer.', 'design', 650, 3],
+      ['Monthly design retainer (20 hours)', 'Twenty hours of on-call design every month: social posts, flyers, presentation slides and quick brand updates, with a shared request board.', 'design', 12500, 30],
+      ['Complete brand strategy and identity system', 'Brand workshop, positioning statement, logo suite, typography, colour system and a 30-page brand guideline document for growing businesses.', 'design', 18000, 21],
     ],
   },
   {
@@ -124,6 +127,19 @@ const SAMPLE_BOOKINGS = [
   ['sipho@demo.hustlehub.local', 'Responsive React landing page', 33, 'completed', 'Landing page for the coffee shop.'],
   ['amahle@demo.hustlehub.local', 'SEO blog articles (1000 words)', 12, 'confirmed', 'Topic: easy weekday baking recipes.'],
   ['sipho@demo.hustlehub.local', 'Podcast editing and mastering', 3, 'confirmed', ''],
+  // A year of higher-value work for Thandiwe, so the Earnings & tax dashboard has a full tax-year history.
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 215, 'completed', 'Retainer - March: autumn menu and in-store posters.'],
+  ['sipho@demo.hustlehub.local', 'Complete brand strategy and identity system', 200, 'completed', 'Full brand system for the coffee shop group.'],
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 185, 'completed', 'Retainer - April: Easter campaign assets.'],
+  ['amahle@demo.hustlehub.local', 'Complete brand strategy and identity system', 170, 'completed', 'Brand guidelines for the second bakery branch.'],
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 155, 'completed', 'Retainer - May: winter specials and loyalty cards.'],
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 125, 'completed', 'Retainer - June: mid-year sale campaign.'],
+  ['amahle@demo.hustlehub.local', 'Complete brand strategy and identity system', 110, 'completed', 'Identity refresh for the catering side of the business.'],
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 95, 'completed', 'Retainer - July: packaging labels.'],
+  ['sipho@demo.hustlehub.local', 'Complete brand strategy and identity system', 80, 'completed', 'Brand system for the new roastery.'],
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 64, 'completed', 'Retainer - August: Heritage Month campaign.'],
+  ['sipho@demo.hustlehub.local', 'Complete brand strategy and identity system', 50, 'completed', 'Franchise brand pack.'],
+  ['amahle@demo.hustlehub.local', 'Monthly design retainer (20 hours)', 34, 'completed', 'Retainer - September: spring launch.'],
 ];
 
 async function upsertUser(name, email, role, passwordHash) {
@@ -164,17 +180,15 @@ async function main() {
   const clients = {};
   for (const c of CLIENTS) clients[c.email] = await upsertUser(c.name, c.email, 'client', passwordHash);
 
-  const existingBookings = await Booking.countDocuments({ client: { $in: Object.values(clients).map((c) => c._id) } });
   let bookingCount = 0;
-  if (existingBookings === 0) {
-    for (const [email, title, daysAgo, status, notes] of SAMPLE_BOOKINGS) {
-      const gig = await Gig.findOne({ title });
-      const { booking } = await bookingService.createBooking({ gigId: gig._id, clientId: clients[email].id, notes });
-      if (status === 'completed') await bookingService.completeBooking(booking);
-      if (status === 'cancelled') await bookingService.cancelBooking(booking, 'client');
-      await backdate(booking._id, daysAgo);
-      bookingCount += 1;
-    }
+  for (const [email, title, daysAgo, status, notes] of SAMPLE_BOOKINGS) {
+    const gig = await Gig.findOne({ title });
+    if (await Booking.exists({ client: clients[email]._id, gig: gig._id, notes })) continue; // Already seeded on an earlier run.
+    const { booking } = await bookingService.createBooking({ gigId: gig._id, clientId: clients[email].id, notes });
+    if (status === 'completed') await bookingService.completeBooking(booking);
+    if (status === 'cancelled') await bookingService.cancelBooking(booking, 'client');
+    await backdate(booking._id, daysAgo);
+    bookingCount += 1;
   }
 
   console.log(`Demo data ready: ${FREELANCERS.length} freelancers, ${gigCount} gigs, ${CLIENTS.length} clients, ${bookingCount} new sample bookings.`);
