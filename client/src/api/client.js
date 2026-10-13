@@ -80,6 +80,7 @@ export const api = {
   login: (email, password) => apiRequest('/auth/login', { method: 'POST', body: { email, password } }),
   register: (data) => apiRequest('/auth/register', { method: 'POST', body: data }),
   me: () => apiRequest('/users/me'),
+  logout: () => apiRequest('/auth/logout', { method: 'POST' }),
 
   // Gigs
   listGigs: (params) => apiRequest(`/gigs${query(params)}`),
@@ -105,4 +106,6 @@ export const api = {
   adminStats: () => apiRequest('/admin/stats'),
   adminUsers: () => apiRequest('/admin/users'),
   adminGigs: () => apiRequest('/admin/gigs'),
+  revokeSessions: (userId) => apiRequest(`/admin/users/${encodeURIComponent(userId)}/revoke-sessions`, { method: 'POST' }),
+  securityEvents: (hours) => apiRequest(`/admin/security-events${query({ hours })}`),
 };

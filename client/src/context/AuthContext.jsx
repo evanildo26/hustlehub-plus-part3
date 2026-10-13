@@ -12,6 +12,10 @@
  * tampered or expired token is discarded immediately. The role shown in the
  * UI therefore always comes from the server, not from decoding the token
  * in the browser.
+ *
+ * Logging out also tells the API to revoke the token (POST /api/auth/logout),
+ * so a copy of it - e.g. one lifted from this browser - stops working at
+ * once instead of staying valid until it expires.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, setAuthToken, setUnauthorizedHandler } from '../api/client';
@@ -73,7 +77,12 @@ export function AuthProvider({ children }) {
 
   const register = useCallback((data) => api.register(data), []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await api.logout(); // Revoke the token server-side while we still hold it.
+    } catch {
+      // Already expired/revoked or offline - the local session is cleared either way.
+    }
     clearSession();
     setSessionExpired(false);
   }, [clearSession]);

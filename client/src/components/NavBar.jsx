@@ -34,9 +34,9 @@ export default function NavBar() {
   const [open, setOpen] = useState(false);
   const links = user ? LINKS[user.role] || [] : [{ to: '/', label: 'Browse gigs', icon: Search, end: true }];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setOpen(false);
-    logout();
+    await logout(); // Wait for the server to revoke the token before leaving the page.
     navigate('/login');
   };
 
