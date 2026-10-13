@@ -35,7 +35,6 @@ function normaliseKnownErrors(err) {
   return err;
 }
 
-// eslint-disable-next-line no-unused-vars
 function errorHandler(rawErr, req, res, next) {
   // Express recognises this as an ERROR-HANDLING middleware specifically because it takes 4 arguments (err first).
   const err = normaliseKnownErrors(rawErr);

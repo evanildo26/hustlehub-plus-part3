@@ -22,10 +22,7 @@ const PUBLIC_FREELANCER_FIELDS = 'name'; // Browsers see a freelancer's name onl
 
 /** Copies only allow-listed fields from the validated body (mass-assignment protection, layer 2). */
 function pickGigFields(source) {
-  return GIG_FIELDS.reduce((acc, key) => {
-    if (source[key] !== undefined) acc[key] = source[key];
-    return acc;
-  }, {});
+  return Object.fromEntries(Object.entries(source).filter(([key, value]) => GIG_FIELDS.includes(key) && value !== undefined));
 }
 
 /** Loads a gig and enforces ownership. Admins may pass `allowAdmin` for moderation actions. */
@@ -57,6 +54,10 @@ async function listGigs(req, res, next) {
     const filter = { isActive: true }; // Built from validated, typed values only - never from raw req.query objects.
     if (category) filter.category = category;
     if (search) {
+      // Reviewed static-analysis finding (security/detect-non-literal-regexp): the
+      // input is escaped so every character matches literally, and the validator
+      // caps it at 50 characters, so it can't form a slow (ReDoS) pattern.
+      // eslint-disable-next-line security/detect-non-literal-regexp
       const pattern = new RegExp(escapeRegex(search), 'i'); // Literal, case-insensitive match - see escapeRegex.
       filter.$or = [{ title: pattern }, { description: pattern }];
     }
@@ -92,8 +93,8 @@ async function listCategories(req, res, next) {
       { $match: { isActive: true } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
     ]);
-    const byCategory = Object.fromEntries(counts.map((c) => [c._id, c.count]));
-    const data = Gig.CATEGORIES.map((category) => ({ category, count: byCategory[category] || 0 }));
+    const byCategory = new Map(counts.map((c) => [c._id, c.count]));
+    const data = Gig.CATEGORIES.map((category) => ({ category, count: byCategory.get(category) || 0 }));
     return res.status(200).json({ success: true, data, total: data.reduce((sum, c) => sum + c.count, 0) });
   } catch (err) {
     return next(err);

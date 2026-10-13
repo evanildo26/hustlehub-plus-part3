@@ -169,22 +169,24 @@ async function main() {
   const rounds = Math.max(...freelancers.map((f) => f.gigs.length));
   for (let i = 0; i < rounds; i += 1) {
     for (const { user, gigs } of freelancers) {
-      if (!gigs[i]) continue;
-      const [title, description, category, price, deliveryDays] = gigs[i];
+      const gigData = gigs.at(i);
+      if (!gigData) continue;
+      const [title, description, category, price, deliveryDays] = gigData;
       const exists = await Gig.exists({ freelancer: user._id, title });
       if (!exists) await Gig.create({ freelancer: user._id, title, description, category, price, deliveryDays });
       gigCount += 1;
     }
   }
 
-  const clients = {};
-  for (const c of CLIENTS) clients[c.email] = await upsertUser(c.name, c.email, 'client', passwordHash);
+  const clients = new Map();
+  for (const c of CLIENTS) clients.set(c.email, await upsertUser(c.name, c.email, 'client', passwordHash));
 
   let bookingCount = 0;
   for (const [email, title, daysAgo, status, notes] of SAMPLE_BOOKINGS) {
     const gig = await Gig.findOne({ title });
-    if (await Booking.exists({ client: clients[email]._id, gig: gig._id, notes })) continue; // Already seeded on an earlier run.
-    const { booking } = await bookingService.createBooking({ gigId: gig._id, clientId: clients[email].id, notes });
+    const client = clients.get(email);
+    if (await Booking.exists({ client: client._id, gig: gig._id, notes })) continue; // Already seeded on an earlier run.
+    const { booking } = await bookingService.createBooking({ gigId: gig._id, clientId: client.id, notes });
     if (status === 'completed') await bookingService.completeBooking(booking);
     if (status === 'cancelled') await bookingService.cancelBooking(booking, 'client');
     await backdate(booking._id, daysAgo);

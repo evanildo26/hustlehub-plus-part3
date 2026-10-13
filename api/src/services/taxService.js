@@ -65,7 +65,8 @@ const TAX_TABLES = {
 };
 
 const AGE_GROUPS = ['under65', '65to74', '75plus'];
-const LATEST_TABLE_YEAR = Math.max(...Object.keys(TAX_TABLES).map(Number));
+const TABLES_BY_YEAR = new Map(Object.entries(TAX_TABLES).map(([year, table]) => [Number(year), table]));
+const LATEST_TABLE_YEAR = Math.max(...TABLES_BY_YEAR.keys());
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -88,7 +89,7 @@ function taxYearFor(date = new Date()) {
  * falls back to the latest one (SARS publishes new tables each February).
  */
 function tableFor(taxYear) {
-  return TAX_TABLES[taxYear] || TAX_TABLES[Math.min(taxYear, LATEST_TABLE_YEAR)] || TAX_TABLES[LATEST_TABLE_YEAR];
+  return TABLES_BY_YEAR.get(taxYear) || TABLES_BY_YEAR.get(LATEST_TABLE_YEAR);
 }
 
 /** Total rebate for an age group (65+ adds the secondary rebate, 75+ also the tertiary one). */
@@ -99,6 +100,13 @@ function rebateFor(table, ageGroup = 'under65') {
   return primary;
 }
 
+/** Income below which no tax is payable for an age group. */
+function thresholdFor(table, ageGroup = 'under65') {
+  if (ageGroup === '75plus') return table.thresholds['75plus'];
+  if (ageGroup === '65to74') return table.thresholds['65to74'];
+  return table.thresholds.under65;
+}
+
 /**
  * Annual income tax on `taxableIncome` using a SARS table.
  * Returns the tax before and after rebates plus a per-bracket breakdown
@@ -106,13 +114,12 @@ function rebateFor(table, ageGroup = 'under65') {
  */
 function calculateAnnualTax(taxableIncome, table, ageGroup = 'under65') {
   const income = Math.max(0, Number(taxableIncome) || 0);
-  const bracketIndex = table.brackets.findIndex((b) => income <= b.upTo);
-  const bracket = table.brackets[bracketIndex];
+  const bracket = table.brackets.find((b) => income <= b.upTo); // The top bracket is open-ended, so one always matches.
   const taxBeforeRebates = bracket.base + bracket.rate * (income - bracket.over);
   const rebate = rebateFor(table, ageGroup);
   const tax = Math.max(0, taxBeforeRebates - rebate);
 
-  const breakdown = table.brackets.map((b, i) => {
+  const breakdown = table.brackets.map((b) => {
     const from = b.over;
     const to = b.upTo;
     const incomeInBracket = Math.max(0, Math.min(income, to) - from);
@@ -122,7 +129,7 @@ function calculateAnnualTax(taxableIncome, table, ageGroup = 'under65') {
       rate: b.rate,
       incomeInBracket: round2(incomeInBracket),
       taxInBracket: round2(incomeInBracket * b.rate),
-      isCurrent: i === bracketIndex,
+      isCurrent: b === bracket,
     };
   });
 
@@ -154,8 +161,8 @@ function buildTaxEstimate({ monthlyNet, now = new Date(), ageGroup = 'under65' }
   const elapsed = monthsElapsed(taxYear, now);
 
   const byMonth = new Map(monthlyNet.map((m) => [m.month, m.netIncome]));
-  const total = (key) => round2(monthlyNet.reduce((sum, m) => sum + (m[key] || 0), 0));
-  const ytdIncome = total('netIncome');
+  const total = (pick) => round2(monthlyNet.reduce((sum, m) => sum + (pick(m) || 0), 0));
+  const ytdIncome = total((m) => m.netIncome);
   const projectedAnnualIncome = round2((ytdIncome / elapsed) * 12);
 
   const annual = calculateAnnualTax(projectedAnnualIncome, table, ageGroup);
@@ -179,7 +186,7 @@ function buildTaxEstimate({ monthlyNet, now = new Date(), ageGroup = 'under65' }
     { period: 2, dueDate: lastDay, amount: round2(annual.tax - firstPayment) },
   ];
 
-  const threshold = table.thresholds[ageGroup];
+  const threshold = thresholdFor(table, ageGroup);
 
   return {
     currency: 'ZAR',
@@ -190,8 +197,8 @@ function buildTaxEstimate({ monthlyNet, now = new Date(), ageGroup = 'under65' }
       monthsElapsed: elapsed,
     },
     ageGroup,
-    ytdGross: total('grossIncome'), // What clients paid this tax year (net of refunds).
-    ytdPlatformFees: total('platformFees'),
+    ytdGross: total((m) => m.grossIncome), // What clients paid this tax year (net of refunds).
+    ytdPlatformFees: total((m) => m.platformFees),
     ytdIncome,
     projectedAnnualIncome,
     estimatedAnnualTax: annual.tax,

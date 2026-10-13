@@ -130,9 +130,11 @@ function shipToCloud(entry) {
 // ---------------------------------------------------------------------------
 const sinks = [];
 
+const dropUndefined = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+
 function write(level, event, meta = {}) {
   const ctx = getContext();
-  const entry = redact({
+  const entry = dropUndefined(redact({
     timestamp: new Date().toISOString(),
     level,
     event,
@@ -142,8 +144,7 @@ function write(level, event, meta = {}) {
     ip: ctx.ip,
     userId: ctx.userId,
     ...meta, // Explicit values from the caller win over the context ones.
-  });
-  Object.keys(entry).forEach((k) => entry[k] === undefined && delete entry[k]);
+  }));
 
   for (const sink of sinks) {
     try {

@@ -10,16 +10,10 @@
 const path = require('path'); // Built-in module for building OS-independent file paths.
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env'), quiet: true }); // Loads variables from api/.env into process.env.
 
-const required = ['JWT_SECRET']; // List of environment variables the app cannot safely run without.
-const missing = required.filter((key) => !process.env[key] || process.env[key].trim() === ''); // Find any required var that is unset or blank.
-
-if (missing.length > 0) {
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === '') {
   // Fail fast and clearly - a missing secret must never silently fall back
   // to an insecure default in a security-focused application.
-  console.error(
-    `Missing required environment variable(s): ${missing.join(', ')}. ` +
-      'Copy .env.example to .env and set them before starting the server.'
-  );
+  console.error('Missing required environment variable JWT_SECRET. Copy .env.example to .env and set it before starting the server.');
   process.exit(1); // Stop the process immediately rather than run with an undefined/insecure JWT secret.
 }
 
@@ -29,9 +23,9 @@ if (process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 
-/** Reads a positive integer env var, falling back to a default when unset/invalid. */
-function intFromEnv(key, fallback) {
-  const value = parseInt(process.env[key], 10); // NaN if unset or not a number.
+/** Parses a positive integer env value, falling back to a default when unset/invalid. */
+function positiveInt(raw, fallback) {
+  const value = parseInt(raw, 10); // NaN if unset or not a number.
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
@@ -39,7 +33,7 @@ const nodeEnv = process.env.NODE_ENV || 'development'; // Which environment we'r
 
 module.exports = {
   nodeEnv,
-  port: intFromEnv('PORT', 5000), // Convert the PORT string to a number; fall back to 5000 if missing/invalid.
+  port: positiveInt(process.env.PORT, 5000), // Convert the PORT string to a number; fall back to 5000 if missing/invalid.
   mongoUri: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hustlehub', // MongoDB connection string (local dev default).
   jwtSecret: process.env.JWT_SECRET, // The secret key used to sign and verify JWTs - required, so no fallback here.
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1h', // How long an issued token stays valid; defaults to 1 hour.
@@ -54,19 +48,19 @@ module.exports = {
   // can't fake its IP to dodge per-IP rate limits when the API is exposed directly.
   trustProxy: Number.isInteger(parseInt(process.env.TRUST_PROXY, 10)) ? parseInt(process.env.TRUST_PROXY, 10) : 0,
   security: {
-    lockoutThreshold: intFromEnv('LOCKOUT_THRESHOLD', 5), // Failed logins for one email before it is locked.
-    lockoutMinutes: intFromEnv('LOCKOUT_MINUTES', 15), // How long the lock lasts (and the window failures are counted in).
-    alertThreshold: intFromEnv('SECURITY_ALERT_THRESHOLD', 10), // Suspicious events from one IP in the alert window before an alert fires.
-    alertWindowMinutes: intFromEnv('SECURITY_ALERT_WINDOW_MINUTES', 5),
+    lockoutThreshold: positiveInt(process.env.LOCKOUT_THRESHOLD, 5), // Failed logins for one email before it is locked.
+    lockoutMinutes: positiveInt(process.env.LOCKOUT_MINUTES, 15), // How long the lock lasts (and the window failures are counted in).
+    alertThreshold: positiveInt(process.env.SECURITY_ALERT_THRESHOLD, 10), // Suspicious events from one IP in the alert window before an alert fires.
+    alertWindowMinutes: positiveInt(process.env.SECURITY_ALERT_WINDOW_MINUTES, 5),
   },
   isProduction: nodeEnv === 'production', // Convenience boolean flag used elsewhere (e.g. logging format).
   isTest: nodeEnv === 'test', // True under Jest - used to keep test output quiet.
   rateLimits: {
     // All limits are configurable so markers can tighten/loosen them without code changes.
-    windowMs: intFromEnv('RATE_LIMIT_WINDOW_MINUTES', 15) * 60 * 1000, // Rolling window shared by every limiter.
-    loginMax: intFromEnv('RATE_LIMIT_LOGIN_MAX', 10), // Failed login attempts per IP per window.
-    registerMax: intFromEnv('RATE_LIMIT_REGISTER_MAX', 20), // Registrations per IP per window.
-    bookingMax: intFromEnv('RATE_LIMIT_BOOKING_MAX', 10), // Bookings per user per window.
-    apiMax: intFromEnv('RATE_LIMIT_API_MAX', 300), // General API requests per IP per window.
+    windowMs: positiveInt(process.env.RATE_LIMIT_WINDOW_MINUTES, 15) * 60 * 1000, // Rolling window shared by every limiter.
+    loginMax: positiveInt(process.env.RATE_LIMIT_LOGIN_MAX, 10), // Failed login attempts per IP per window.
+    registerMax: positiveInt(process.env.RATE_LIMIT_REGISTER_MAX, 20), // Registrations per IP per window.
+    bookingMax: positiveInt(process.env.RATE_LIMIT_BOOKING_MAX, 10), // Bookings per user per window.
+    apiMax: positiveInt(process.env.RATE_LIMIT_API_MAX, 300), // General API requests per IP per window.
   },
 };
