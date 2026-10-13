@@ -13,6 +13,14 @@ const { toPublicProfile } = require('../models/userModel'); // Strips the passwo
 const { signToken } = require('../utils/jwt'); // Issues a signed JWT after a successful login.
 const AppError = require('../utils/AppError'); // Operational-error class for controlled, safe error responses.
 const logger = require('../utils/logger'); // Structured logger for recording registration/login events.
+const RevokedToken = require('../models/revokedTokenModel'); // Deny-list used by logout.
+const lockout = require('../services/loginLockout'); // Per-account lockout after repeated failures.
+
+/** 423 Locked with a Retry-After header, the same for registered and unknown emails. */
+function lockedError(res, minutes) {
+  res.set('Retry-After', String(minutes * 60));
+  return new AppError(`Too many failed login attempts for this account. Please try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`, 423);
+}
 
 const SALT_ROUNDS = 12; // Higher = slower to brute force, but slower to hash.
 // 12 is the OWASP-recommended baseline for bcrypt as of 2024/2025 - a good
@@ -70,7 +78,17 @@ async function login(req, res, next) {
     const { email, password } = req.body; // Already validated (both fields present, email well-formed) by validators.js.
     const normalisedEmail = email.trim().toLowerCase(); // Match the same normalisation used at registration time.
 
-    const user = await User.findOne({ email: normalisedEmail }).select('+password'); // Look up the account; the hash is opted in only here.
+    const maskedEmail = logger.maskEmail(normalisedEmail); // Logs show "th***@domain", never the full address.
+
+    // Account lockout check comes first: a locked email gets no password
+    // check at all, so guessing continues to fail even with the right password.
+    const minutesLeft = await lockout.lockedMinutesLeft(normalisedEmail);
+    if (minutesLeft > 0) {
+      logger.security('LOGIN_BLOCKED_LOCKED', { email: maskedEmail, minutesLeft });
+      throw lockedError(res, minutesLeft);
+    }
+
+    const user = await User.findOne({ email: normalisedEmail }).select('+password +tokenVersion'); // Look up the account; the hash is opted in only here.
 
     // Intentionally the SAME error message and status code whether the
     // email doesn't exist or the password is wrong. Distinguishing the two
@@ -82,17 +100,24 @@ async function login(req, res, next) {
     // otherwise a fast reply would reveal "no such email" via timing.
     const passwordMatches = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
 
-    if (!user) {
-      logger.security('LOGIN_FAILED', { email: normalisedEmail, reason: 'no_such_user', ip: req.ip }); // Logged server-side only - the client never sees "reason".
+    if (!user || !passwordMatches) {
+      // Same counter, same response for both cases - keeps them indistinguishable to an attacker.
+      const attempt = await lockout.recordFailure(normalisedEmail);
+      logger.security('LOGIN_FAILED', {
+        email: maskedEmail,
+        reason: user ? 'bad_password' : 'no_such_user', // Logged server-side only - the client never sees "reason".
+        failuresInWindow: attempt.failures,
+      });
+      if (attempt.locked) {
+        logger.security('ACCOUNT_LOCKED', { email: maskedEmail, minutes: attempt.minutes, userId: user ? user.id : undefined });
+        throw lockedError(res, attempt.minutes);
+      }
       throw invalidCredentialsError;
     }
 
-    if (!passwordMatches) {
-      logger.security('LOGIN_FAILED', { email: normalisedEmail, reason: 'bad_password', ip: req.ip });
-      throw invalidCredentialsError; // Same error/status as "no such user" - keeps the response indistinguishable to an attacker.
-    }
+    await lockout.clearFailures(normalisedEmail); // A successful login resets the counter.
 
-    const token = signToken({ id: user.id, role: user.role, email: user.email }); // Issue a JWT proving this user is now authenticated.
+    const token = signToken({ id: user.id, role: user.role, email: user.email, tokenVersion: user.tokenVersion }); // Issue a JWT proving this user is now authenticated.
 
     logger.security('LOGIN_SUCCESS', { userId: user.id, role: user.role }); // Audit trail entry for a successful login.
 
@@ -107,4 +132,24 @@ async function login(req, res, next) {
   }
 }
 
-module.exports = { register, login }; // Wired up to POST /api/auth/register and POST /api/auth/login in authRoutes.js.
+/**
+ * POST /api/auth/logout (additional security feature #2: token revocation).
+ * Puts this token's id on the deny-list until it would have expired, so a
+ * copied or stolen token stops working the moment the user logs out -
+ * instead of staying valid for up to an hour.
+ */
+async function logout(req, res, next) {
+  try {
+    await RevokedToken.updateOne(
+      { jti: req.auth.jti },
+      { $setOnInsert: { user: req.user.id, reason: 'logout', expiresAt: new Date(req.auth.exp * 1000) } },
+      { upsert: true }
+    );
+    logger.security('LOGOUT', { userId: req.user.id });
+    return res.status(200).json({ success: true, message: 'You have been logged out.' });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { register, login, logout }; // Wired up to /api/auth/register, /login and /logout in authRoutes.js.

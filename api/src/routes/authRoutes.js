@@ -1,6 +1,7 @@
 const express = require('express'); // Web framework - used here just for its Router.
 const authController = require('../controllers/authController'); // Business logic for register/login.
 const { loginLimiter, registerLimiter } = require('../middleware/rateLimiter'); // Caps auth attempts per IP per window.
+const { protect } = require('../middleware/authMiddleware'); // JWT check - logout needs to know which token to revoke.
 const {
   registerValidationRules, // Field-level validation rules specific to registration.
   loginValidationRules, // Field-level validation rules specific to login.
@@ -31,5 +32,8 @@ router.post(
   handleValidationErrors,
   authController.login
 );
+
+// POST /api/auth/logout - revokes the token used to call it.
+router.post('/logout', protect, authController.logout);
 
 module.exports = router; // Mounted at /api/auth in src/app.js, so these become /api/auth/register and /api/auth/login.
