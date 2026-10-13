@@ -49,6 +49,16 @@ module.exports = {
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean),
+  // Number of reverse proxies in front of the API (1 behind the Docker nginx
+  // container). 0 = trust none: X-Forwarded-For is ignored, so a client
+  // can't fake its IP to dodge per-IP rate limits when the API is exposed directly.
+  trustProxy: Number.isInteger(parseInt(process.env.TRUST_PROXY, 10)) ? parseInt(process.env.TRUST_PROXY, 10) : 0,
+  security: {
+    lockoutThreshold: intFromEnv('LOCKOUT_THRESHOLD', 5), // Failed logins for one email before it is locked.
+    lockoutMinutes: intFromEnv('LOCKOUT_MINUTES', 15), // How long the lock lasts (and the window failures are counted in).
+    alertThreshold: intFromEnv('SECURITY_ALERT_THRESHOLD', 10), // Suspicious events from one IP in the alert window before an alert fires.
+    alertWindowMinutes: intFromEnv('SECURITY_ALERT_WINDOW_MINUTES', 5),
+  },
   isProduction: nodeEnv === 'production', // Convenience boolean flag used elsewhere (e.g. logging format).
   isTest: nodeEnv === 'test', // True under Jest - used to keep test output quiet.
   rateLimits: {
