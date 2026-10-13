@@ -16,7 +16,9 @@ RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
 USER root
-RUN apk add --no-cache openssl
+# Patch the base image's OS packages (Trivy flagged outdated curl, expat,
+# pcre2, libxml2 ...) and add openssl for the self-signed certificate.
+RUN apk upgrade --no-cache && apk add --no-cache openssl
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY nginx/15-generate-cert.sh /docker-entrypoint.d/15-generate-cert.sh

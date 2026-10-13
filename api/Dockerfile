@@ -3,7 +3,8 @@
 # HustleHub+ API image.
 #  - Multi-stage: dependencies are installed in a throw-away stage, so the
 #    final image has no npm cache, build tools or dev dependencies.
-#  - Small, current base (Node 22 LTS on Alpine) with only openssl (to create
+#  - Small, current base (Node 22 LTS on Alpine, OS packages patched, npm
+#    removed) with only openssl (to create
 #    the TLS certificate) and tini (a proper PID 1 that forwards SIGTERM so
 #    the server can shut down gracefully and flush its logs).
 #  - Runs as the unprivileged `node` user. The application code is owned by
@@ -15,7 +16,13 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 FROM node:22-alpine AS runtime
-RUN apk add --no-cache openssl tini
+# Patch OS packages, add openssl + tini, and remove the package managers that
+# ship with the Node image: the API never installs anything at runtime, and
+# the bundled npm carried known CVEs (found by the Trivy scan in CI).
+RUN apk upgrade --no-cache \
+ && apk add --no-cache openssl tini \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn-*
 ENV NODE_ENV=production \
     PORT=5000
 WORKDIR /app
