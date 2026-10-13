@@ -7,4 +7,5 @@ module.exports = {
   ...require('./authValidators'),
   ...require('./gigValidators'),
   ...require('./bookingValidators'),
+  ...require('./incomeValidators'),
 };
