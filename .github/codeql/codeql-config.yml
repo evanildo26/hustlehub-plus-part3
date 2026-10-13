@@ -1,0 +1,8 @@
+# CodeQL scope: the application code. docs/ only holds generated evidence
+# (e.g. the Newman HTML report, which loads its own viewer scripts from a CDN)
+# and is never served by the app or shipped in an image.
+name: HustleHub+ CodeQL config
+paths-ignore:
+  - docs/**
+  - '**/node_modules/**'
+  - '**/dist/**'
