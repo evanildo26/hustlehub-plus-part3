@@ -10,12 +10,12 @@
 #  - Runs as the unprivileged `node` user. The application code is owned by
 #    root and read-only for that user; only certs/ and src/logs/ are writable.
 
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-FROM node:22-alpine AS runtime
+FROM node:26-alpine AS runtime
 # Patch OS packages, add openssl + tini, and remove the package managers that
 # ship with the Node image: the API never installs anything at runtime, and
 # the bundled npm carried known CVEs (found by the Trivy scan in CI).
