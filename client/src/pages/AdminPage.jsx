@@ -5,9 +5,10 @@ import ConfirmButton from '../components/ConfirmButton';
 import { CalendarCheck, LayoutGrid, Users, Wallet } from 'lucide-react';
 import { Alert, Loader } from '../components/Feedback';
 import StatCard from '../components/StatCard';
+import SecurityMonitor from '../components/SecurityMonitor';
 import { capitalise, formatCurrency, formatDate } from '../utils/format';
 
-/** Admin oversight: platform stats, user list and gig moderation. */
+/** Admin oversight: platform stats, security monitor, gig moderation and users (with session revocation). */
 export default function AdminPage() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
@@ -31,6 +32,17 @@ export default function AdminPage() {
       await api.deleteGig(gig.id);
       setGigs((list) => list.filter((g) => g.id !== gig.id));
       setNotice(`Removed "${gig.title}".`);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const revokeSessions = async (u) => {
+    setError('');
+    setNotice('');
+    try {
+      const res = await api.revokeSessions(u.id);
+      setNotice(res.message); // e.g. "All sessions for Sipho Dlamini have been revoked."
     } catch (err) {
       setError(err.message);
     }
@@ -63,6 +75,8 @@ export default function AdminPage() {
           tone="primary"
         />
       </div>
+
+      <SecurityMonitor />
 
       <div className="card">
         <h2>Gig moderation</h2>
@@ -110,6 +124,9 @@ export default function AdminPage() {
                 <th scope="col">Email</th>
                 <th scope="col">Role</th>
                 <th scope="col">Joined</th>
+                <th scope="col">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -121,6 +138,11 @@ export default function AdminPage() {
                     <span className={`role role--${u.role}`}>{capitalise(u.role)}</span>
                   </td>
                   <td>{formatDate(u.createdAt)}</td>
+                  <td className="actions">
+                    <ConfirmButton onConfirm={() => revokeSessions(u)} confirmLabel="Revoke" className="btn btn--ghost btn--sm">
+                      Revoke sessions
+                    </ConfirmButton>
+                  </td>
                 </tr>
               ))}
             </tbody>

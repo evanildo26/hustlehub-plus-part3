@@ -448,6 +448,27 @@ code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-siz
 .brackets__badge { grid-area: badge; justify-self: start; background: var(--primary-soft); color: var(--primary); text-transform: none; }
 .method { margin: 0 0 0.9rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.45rem; color: var(--text-soft); font-size: 0.92rem; }
 
+/* ---------- Admin security monitor ---------- */
+.security { display: flex; flex-direction: column; gap: 1rem; }
+.security > .alert { margin: 0; }
+.security__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.security__header h2 { margin-bottom: 0.2rem; }
+.security__body { display: flex; flex-direction: column; gap: 1rem; transition: opacity 0.2s; }
+.security__body.is-refreshing { opacity: 0.55; }
+.security h3 { font-size: 0.98rem; margin-bottom: 0.6rem; }
+.alerts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.alerts__item { display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.7rem 0.9rem; border-radius: 10px; background: #fdf0f0; border: 1px solid #f3c7c7; color: #7f1d1d; }
+.alerts__item svg { color: #d03b3b; flex-shrink: 0; margin-top: 0.1rem; }
+.alerts__item > span { display: flex; flex-direction: column; gap: 0.1rem; }
+.alerts__none { margin: 0; padding: 0.6rem 0.9rem; border-radius: 10px; background: var(--success-soft); color: #166534; }
+.stats--compact { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+.stats--compact .stat { padding: 1rem; }
+.stats--compact .stat__icon { width: 32px; height: 32px; border-radius: 10px; margin-bottom: 0.5rem; }
+.stats--compact .stat__value { font-size: 1.4rem; }
+.table--compact th, .table--compact td { padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.86rem; }
+.table tr.is-alert td { background: #fdf0f0; }
+.nowrap { white-space: nowrap; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
   .nav__toggle { display: inline-flex; }

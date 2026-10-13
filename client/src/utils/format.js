@@ -7,6 +7,10 @@ export const formatCurrency = (value) => currency.format(Number(value) || 0);
 
 export const formatDate = (value) => (value ? date.format(new Date(value)) : '-');
 
+const dateTime = new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+/** "13 Oct, 14:05" - for event logs. */
+export const formatDateTime = (value) => (value ? dateTime.format(new Date(value)) : '-');
+
 /** "2026-10" -> "October 2026" */
 export const formatMonth = (yyyyMm) => {
   const [y, m] = yyyyMm.split('-').map(Number);
