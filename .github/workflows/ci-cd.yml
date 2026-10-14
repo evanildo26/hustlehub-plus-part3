@@ -67,7 +67,7 @@ jobs:
         run: npm test -- --reporter=default --reporter=junit --outputFile.junit=test-results/junit.xml
       - name: Upload backend results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: backend-results
           path: |
@@ -98,7 +98,7 @@ jobs:
         run: npm run build
       - name: Upload frontend results and build
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: frontend-results
           path: |
@@ -157,7 +157,7 @@ jobs:
         run: npm run test:api
       - name: Upload Newman reports and API logs
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: newman-reports
           path: |
@@ -194,7 +194,7 @@ jobs:
             --redact --no-banner --report-format json --report-path /repo/gitleaks-report.json
       - name: Upload security reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: security-reports
           path: |
@@ -270,7 +270,7 @@ jobs:
           docker compose exec -T api cat src/logs/events.log > container-logs/api-events.log 2>/dev/null || true
       - name: Upload Docker job evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docker-evidence
           path: |
