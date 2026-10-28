@@ -39,7 +39,7 @@
     "eslint": "^9.39.5",
     "eslint-plugin-n": "^17.24.0",
     "eslint-plugin-security": "^3.0.1",
-    "globals": "^15.15.0",
+    "globals": "^17.13.0",
     "newman": "^6.2.2",
     "newman-reporter-htmlextra": "^1.23.1",
     "nodemon": "^3.1.4",
