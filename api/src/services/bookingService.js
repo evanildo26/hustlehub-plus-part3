@@ -95,38 +95,52 @@ async function createBooking({ gigId, clientId, notes }) {
   return { booking, transaction };
 }
 
+/**
+ * Moves a booking out of 'confirmed' in ONE atomic database operation.
+ * Checking the status in code and saving afterwards leaves a gap where two
+ * simultaneous requests both see 'confirmed' (e.g. a double-clicked cancel
+ * writing two refunds). The filter on status means only one request can
+ * match; the other gets a 409.
+ */
+async function leaveConfirmed(booking, changes, action) {
+  if (booking.status !== 'confirmed') throw new AppError(`A ${booking.status} booking cannot be ${action}.`, 409);
+  const claimed = await Booking.findOneAndUpdate({ _id: booking._id, status: 'confirmed' }, { $set: changes });
+  if (!claimed) throw new AppError(`This booking was already updated by another request, so it cannot be ${action}.`, 409);
+  booking.set(changes); // Keep the (populated) document the controller returns in step with the database.
+}
+
 /** Freelancer marks a confirmed booking as delivered. */
 async function completeBooking(booking) {
-  if (booking.status !== 'confirmed') throw new AppError(`A ${booking.status} booking cannot be completed.`, 409);
-  booking.status = 'completed';
-  booking.completedAt = new Date();
-  await booking.save();
+  await leaveConfirmed(booking, { status: 'completed', completedAt: new Date() }, 'completed');
   logger.audit('BOOKING_COMPLETED', { bookingId: booking.id, freelancerId: String(booking.freelancer._id) }); // _id works whether or not the field is populated.
   return booking;
 }
 
 /** Client or freelancer cancels a confirmed booking - a refund transaction reverses the payment. */
 async function cancelBooking(booking, cancelledBy) {
-  if (booking.status !== 'confirmed') throw new AppError(`A ${booking.status} booking cannot be cancelled.`, 409);
+  // Claim the cancellation BEFORE writing the refund, so a second simultaneous request can never record a second refund.
+  await leaveConfirmed(booking, { status: 'cancelled', cancelledAt: new Date(), cancelledBy }, 'cancelled');
 
   const original = splitAmount(booking.amount);
-  const refund = await Transaction.create({
-    booking: booking._id,
-    gig: booking.gig,
-    client: booking.client,
-    freelancer: booking.freelancer,
-    gigTitle: booking.gigTitle,
-    type: 'refund',
-    amount: -original.amount, // Negative rows cancel out the original payment in every income total.
-    platformFee: -original.platformFee,
-    freelancerEarnings: -original.freelancerEarnings,
-    reference: makeReference('TXN'),
-  });
-
-  booking.status = 'cancelled';
-  booking.cancelledAt = new Date();
-  booking.cancelledBy = cancelledBy;
-  await booking.save();
+  let refund;
+  try {
+    refund = await Transaction.create({
+      booking: booking._id,
+      gig: booking.gig,
+      client: booking.client,
+      freelancer: booking.freelancer,
+      gigTitle: booking.gigTitle,
+      type: 'refund',
+      amount: -original.amount, // Negative rows cancel out the original payment in every income total.
+      platformFee: -original.platformFee,
+      freelancerEarnings: -original.freelancerEarnings,
+      reference: makeReference('TXN'),
+    });
+  } catch (err) {
+    // Same manual rollback as createBooking: a cancelled booking must never exist without its refund.
+    await Booking.updateOne({ _id: booking._id, status: 'cancelled' }, { $set: { status: 'confirmed' }, $unset: { cancelledAt: 1, cancelledBy: 1 } });
+    throw err;
+  }
 
   logger.audit('BOOKING_CANCELLED', { bookingId: booking.id, cancelledBy });
   logger.audit('TRANSACTION_RECORDED', {

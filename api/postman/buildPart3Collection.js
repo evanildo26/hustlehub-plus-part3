@@ -1,6 +1,7 @@
 /**
- * Builds the Part 3 Postman collection from the Part 2 one plus two new
- * folders (tax estimate; Part 3 security features). Keeping the new
+ * Builds the Part 3 Postman collection from the Part 2 one plus three new
+ * folders (tax estimate; Part 3 security features; rate limits on the real
+ * routes). Keeping the new
  * requests in code makes them easy to review and regenerate:
  *
  *   node postman/buildPart3Collection.js
@@ -92,7 +93,7 @@ const securityFolder = {
         "pm.collectionVariables.set('lockAttempts', attempt);",
         'if (attempt < 5) {',
         "  pm.test('Attempt ' + attempt + ': 401 invalid credentials', () => pm.response.to.have.status(401));",
-        '  postman.setNextRequest(pm.info.requestName); // Repeat this request',
+        '  pm.execution.setNextRequest(pm.info.requestName); // Repeat this request',
         '} else {',
         "  pm.test('5th failure locks the account: 423', () => pm.response.to.have.status(423));",
         "  pm.test('Lockout message and Retry-After header', () => { pm.expect(pm.response.json().message).to.match(/try again in 15 minutes/); pm.expect(pm.response.headers.get('Retry-After')).to.eql('900'); });",
@@ -138,15 +139,77 @@ const securityFolder = {
   ],
 };
 
+// Loops with pm.execution.setNextRequest until the REAL limiter answers 429, then asserts on that response.
+const rateLimitFolder = {
+  name: '9. Rate limits on the real routes',
+  description:
+    'Hits the configured limiters at their real limits (10 bookings per user, 10 failed logins per IP, per 15 minutes) and asserts on the final 429. Runs LAST: once the login limit is reached every login from this IP is refused for 15 minutes, so restart the API (in-memory limiter store) or wait before running the collection again.',
+  item: [
+    req('Register a fresh client for the booking limit', 'POST', '/api/auth/register', {
+      pre: ["pm.collectionVariables.set('rlEmail', 'ratelimit.' + Date.now() + '@newman.test');", "pm.collectionVariables.set('rlBookings', 0);"],
+      body: '{\n  "name": "Rate Limit Test",\n  "email": "{{rlEmail}}",\n  "password": "{{password}}",\n  "role": "client"\n}',
+      tests: [status(201)],
+    }),
+    req('Login fresh client (successful logins do not count)', 'POST', '/api/auth/login', {
+      body: '{\n  "email": "{{rlEmail}}",\n  "password": "{{password}}"\n}',
+      tests: [status(200), "pm.collectionVariables.set('rlToken', pm.response.json().token);"],
+    }),
+    req('Book until the booking limiter answers (10 x 201, then 429)', 'POST', '/api/bookings', {
+      token: 'rlToken',
+      body: '{\n  "gigId": "{{gigId}}"\n}',
+      tests: [
+        "const n = Number(pm.collectionVariables.get('rlBookings')) + 1;",
+        "pm.collectionVariables.set('rlBookings', n);",
+        'if (n <= 10) {',
+        "  pm.test('Booking ' + n + ' of 10: 201', () => pm.response.to.have.status(201));",
+        '  pm.execution.setNextRequest(pm.info.requestName); // Repeat this request',
+        '} else {',
+        "  pm.test('11th booking from the same user: 429', () => pm.response.to.have.status(429));",
+        "  pm.test('Clear message, retryAfterSeconds and Retry-After header', () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.message).to.match(/booking/i); pm.expect(b.retryAfterSeconds).to.eql(900); pm.expect(pm.response.headers.get('Retry-After')).to.eql('900'); });",
+        "  pm.test('Policy header advertises 10 per 15 minutes', () => pm.expect(pm.response.headers.get('RateLimit-Policy')).to.match(/^10;w=900/));",
+        '}',
+      ],
+    }),
+    req('Another user can still book (limit is per user, not per IP) -> 201', 'POST', '/api/bookings', {
+      token: 'clientToken',
+      body: '{\n  "gigId": "{{gigId}}"\n}',
+      tests: [status(201)],
+      pre: ["pm.collectionVariables.set('rlLogins', 0);"],
+    }),
+    req('Wrong passwords until the login limiter answers (then 429)', 'POST', '/api/auth/login', {
+      // A new unknown email each attempt, so the per-account lockout (423) never hides the per-IP limiter.
+      pre: ["pm.variables.set('rlLoginEmail', 'nobody.' + Date.now() + '.' + pm.collectionVariables.get('rlLogins') + '@newman.test');"],
+      body: '{\n  "email": "{{rlLoginEmail}}",\n  "password": "WrongPass1!"\n}',
+      tests: [
+        "const n = Number(pm.collectionVariables.get('rlLogins')) + 1;",
+        "pm.collectionVariables.set('rlLogins', n);",
+        // Earlier folders already used part of this IP's budget of 10 failures, so the loop stops at the first 429.
+        'if (pm.response.code === 401 && n <= 10) {',
+        "  pm.test('Failed login ' + n + ': 401', () => pm.response.to.have.status(401));",
+        '  pm.execution.setNextRequest(pm.info.requestName); // Repeat this request',
+        '} else {',
+        "  pm.test('Limit reached: 429', () => pm.response.to.have.status(429));",
+        "  pm.test('Clear message, retryAfterSeconds and Retry-After header', () => { const b = pm.response.json(); pm.expect(b.message).to.eql('Too many failed login attempts. Please wait 15 minutes before trying again.'); pm.expect(b.retryAfterSeconds).to.eql(900); pm.expect(pm.response.headers.get('Retry-After')).to.eql('900'); });",
+        "  pm.test('Policy header advertises 10 failures per 15 minutes', () => pm.expect(pm.response.headers.get('RateLimit-Policy')).to.match(/^10;w=900/));",
+        '}',
+      ],
+    }),
+    req('Correct password from the blocked IP -> 429 (no token)', 'POST', '/api/auth/login', {
+      body: '{\n  "email": "{{rlEmail}}",\n  "password": "{{password}}"\n}',
+      tests: [status(429), "pm.test('No token issued', () => pm.expect(pm.response.json().token).to.be.undefined);"],
+    }),
+  ],
+};
+
 const part3 = {
   ...part2,
   info: {
     ...part2.info,
     name: 'HustleHub+ API - Part 3',
     description:
-      'Part 2 collection (auth, gigs, bookings, transactions, admin, security controls) plus Part 3: tax estimate, account lockout, token revocation, security monitor. Run in order (Newman: npm run test:api).',
+      'Part 2 collection (auth, gigs, bookings, transactions, admin, security controls) plus Part 3: tax estimate, account lockout, token revocation, security monitor, and the real rate limits (10 bookings per user, 10 failed logins per IP). Run in order; restart the API or wait 15 minutes between runs, because the last folder uses up the login limit (Newman: npm run test:api).',
   },
-  item: [...part2.item, taxFolder, securityFolder],
+  item: [...part2.item, taxFolder, securityFolder, rateLimitFolder],
 };
 delete part3.info._postman_id;
 

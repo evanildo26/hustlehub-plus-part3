@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "HustleHub+ API - Part 3",
-    "description": "Part 2 collection (auth, gigs, bookings, transactions, admin, security controls) plus Part 3: tax estimate, account lockout, token revocation, security monitor. Run in order (Newman: npm run test:api).",
+    "description": "Part 2 collection (auth, gigs, bookings, transactions, admin, security controls) plus Part 3: tax estimate, account lockout, token revocation, security monitor, and the real rate limits (10 bookings per user, 10 failed logins per IP). Run in order; restart the API or wait 15 minutes between runs, because the last folder uses up the login limit (Newman: npm run test:api).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -3108,7 +3108,7 @@
                   "pm.collectionVariables.set('lockAttempts', attempt);",
                   "if (attempt < 5) {",
                   "  pm.test('Attempt ' + attempt + ': 401 invalid credentials', () => pm.response.to.have.status(401));",
-                  "  postman.setNextRequest(pm.info.requestName); // Repeat this request",
+                  "  pm.execution.setNextRequest(pm.info.requestName); // Repeat this request",
                   "} else {",
                   "  pm.test('5th failure locks the account: 423', () => pm.response.to.have.status(423));",
                   "  pm.test('Lockout message and Retry-After header', () => { pm.expect(pm.response.json().message).to.match(/try again in 15 minutes/); pm.expect(pm.response.headers.get('Retry-After')).to.eql('900'); });",
@@ -3565,6 +3565,324 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9. Rate limits on the real routes",
+      "description": "Hits the configured limiters at their real limits (10 bookings per user, 10 failed logins per IP, per 15 minutes) and asserts on the final 429. Runs LAST: once the login limit is reached every login from this IP is refused for 15 minutes, so restart the API (in-memory limiter store) or wait before running the collection again.",
+      "item": [
+        {
+          "name": "Register a fresh client for the booking limit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rate Limit Test\",\n  \"email\": \"{{rlEmail}}\",\n  \"password\": \"{{password}}\",\n  \"role\": \"client\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('rlEmail', 'ratelimit.' + Date.now() + '@newman.test');",
+                  "pm.collectionVariables.set('rlBookings', 0);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login fresh client (successful logins do not count)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rlEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('rlToken', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book until the booking limiter answers (10 x 201, then 429)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{rlToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gigId\": \"{{gigId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const n = Number(pm.collectionVariables.get('rlBookings')) + 1;",
+                  "pm.collectionVariables.set('rlBookings', n);",
+                  "if (n <= 10) {",
+                  "  pm.test('Booking ' + n + ' of 10: 201', () => pm.response.to.have.status(201));",
+                  "  pm.execution.setNextRequest(pm.info.requestName); // Repeat this request",
+                  "} else {",
+                  "  pm.test('11th booking from the same user: 429', () => pm.response.to.have.status(429));",
+                  "  pm.test('Clear message, retryAfterSeconds and Retry-After header', () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.message).to.match(/booking/i); pm.expect(b.retryAfterSeconds).to.eql(900); pm.expect(pm.response.headers.get('Retry-After')).to.eql('900'); });",
+                  "  pm.test('Policy header advertises 10 per 15 minutes', () => pm.expect(pm.response.headers.get('RateLimit-Policy')).to.match(/^10;w=900/));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Another user can still book (limit is per user, not per IP) -> 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gigId\": \"{{gigId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('rlLogins', 0);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong passwords until the login limiter answers (then 429)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rlLoginEmail}}\",\n  \"password\": \"WrongPass1!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('rlLoginEmail', 'nobody.' + Date.now() + '.' + pm.collectionVariables.get('rlLogins') + '@newman.test');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const n = Number(pm.collectionVariables.get('rlLogins')) + 1;",
+                  "pm.collectionVariables.set('rlLogins', n);",
+                  "if (pm.response.code === 401 && n <= 10) {",
+                  "  pm.test('Failed login ' + n + ': 401', () => pm.response.to.have.status(401));",
+                  "  pm.execution.setNextRequest(pm.info.requestName); // Repeat this request",
+                  "} else {",
+                  "  pm.test('Limit reached: 429', () => pm.response.to.have.status(429));",
+                  "  pm.test('Clear message, retryAfterSeconds and Retry-After header', () => { const b = pm.response.json(); pm.expect(b.message).to.eql('Too many failed login attempts. Please wait 15 minutes before trying again.'); pm.expect(b.retryAfterSeconds).to.eql(900); pm.expect(pm.response.headers.get('Retry-After')).to.eql('900'); });",
+                  "  pm.test('Policy header advertises 10 failures per 15 minutes', () => pm.expect(pm.response.headers.get('RateLimit-Policy')).to.match(/^10;w=900/));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Correct password from the blocked IP -> 429 (no token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{rlEmail}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 429', () => pm.response.to.have.status(429));",
+                  "pm.test('No token issued', () => pm.expect(pm.response.json().token).to.be.undefined);"
                 ]
               }
             }

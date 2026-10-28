@@ -97,6 +97,32 @@ describe('Transactions and income', () => {
     expect(income.body.data).toMatchObject({ grossIncome: 0, netIncome: 0, payments: 1, refunds: 1 });
   });
 
+  test('two simultaneous cancels record exactly one refund (Part 2 feedback: cancellation race)', async () => {
+    const { freelancer, client, gig } = await bookingFixture();
+    const { booking } = (await book(client.token, gig.id)).body.data;
+
+    const cancel = (token) => request(app).patch(`/api/bookings/${booking.id}/cancel`).set(auth(token));
+    const statuses = (await Promise.all([cancel(client.token), cancel(freelancer.token), cancel(client.token)])).map((r) => r.status);
+
+    expect(statuses.filter((s) => s === 200)).toHaveLength(1);
+    expect(statuses.filter((s) => s === 409)).toHaveLength(2);
+    expect(await Transaction.countDocuments({ booking: booking.id, type: 'refund' })).toBe(1);
+  });
+
+  test('a booking cannot be both completed and cancelled when the requests race', async () => {
+    const { freelancer, client, gig } = await bookingFixture();
+    const { booking } = (await book(client.token, gig.id)).body.data;
+
+    const [complete, cancel] = await Promise.all([
+      request(app).patch(`/api/bookings/${booking.id}/complete`).set(auth(freelancer.token)),
+      request(app).patch(`/api/bookings/${booking.id}/cancel`).set(auth(client.token)),
+    ]);
+
+    expect([complete.status, cancel.status].sort()).toEqual([200, 409]);
+    const refunds = await Transaction.countDocuments({ booking: booking.id, type: 'refund' });
+    expect(refunds).toBe(cancel.status === 200 ? 1 : 0);
+  });
+
   test('income is attributed to the correct freelancer only', async () => {
     const { freelancer, client, gig } = await bookingFixture();
     const otherFreelancer = await createUser('freelancer');

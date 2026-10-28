@@ -23,7 +23,7 @@
 ## Table of Contents
 
 1. [Project Overview](#1-project-overview)
-2. [What Changed in Part 3](#2-what-changed-in-part-3)
+2. [What Changed in Part 3](#2-what-changed-in-part-3) · [Part 2 feedback addressed](#21-part-2-feedback-addressed)
 3. [Architecture](#3-architecture)
 4. [Features by Role](#4-features-by-role)
 5. [Tax Estimation and the Income Dashboard](#5-tax-estimation-and-the-income-dashboard)
@@ -62,13 +62,23 @@ The platform handles credentials, personal data and financial records, so securi
 | Area | Part 2 | Part 3 |
 |---|---|---|
 | Financial insights | Income summary (net, gross, fees, monthly table) | **SARS tax estimation** (2026/27 brackets, rebates by age, annualised projection, provisional tax) and an **Earnings & tax dashboard** with accessible SVG charts |
-| CI/CD | None | **GitHub Actions** pipeline: lint, 94 backend + 68 frontend tests, Newman, production build, SAST, secret scan, dependency audit, image scan, full-stack run in Docker, DAST, delivery to Docker Hub; plus **CodeQL** and **Dependabot** |
+| CI/CD | None | **GitHub Actions** pipeline: lint, 98 backend + 68 frontend tests, Newman, production build, SAST, secret scan, dependency audit, image scan, full-stack run in Docker, DAST, delivery to Docker Hub; plus **CodeQL** and **Dependabot** |
 | Static analysis | oxlint on the client | **ESLint + eslint-plugin-security + eslint-plugin-n** on the API, **Semgrep** (155 rules), **CodeQL** (security-extended); every finding fixed or justified ([§14](#14-static-code-analysis-and-security-scanning)) |
 | Deployment | `npm start` / `npm run dev` | **Dockerfiles** in `api/` and `client/` (multi-stage, non-root, read-only) and **Docker Compose** with segmented networks and health checks |
 | Logging | JSON lines to a local file | **Cloud logging (Better Stack)**, request ids, secret redaction, email masking, structured HTTP logs, graceful log flushing |
 | Monitoring | — | **Security monitor**: events stored for the admin dashboard and automatic **SECURITY_ALERT**s for brute force, probing, injection and token tampering |
 | Own security features | — | **Per-account lockout**, **token revocation** (logout + admin "revoke sessions"), **security monitoring and alerting**, plus prototype-pollution stripping found by static analysis |
-| Testing | 54 backend / 53 frontend / 130 Newman assertions | **94** backend / **68** frontend / **172** Newman assertions (91 requests), also run against the containerised stack |
+| Testing | 54 backend / 53 frontend / 130 Newman assertions | **98** backend / **68** frontend / **196** Newman assertions (110 requests), also run against the containerised stack |
+
+### 2.1 Part 2 feedback addressed
+
+| # | Feedback | What was done | Where / proof |
+|---|---|---|---|
+| 1 | Test the limiters actually configured, not only the factory with `max: 2` | Vitest tests on the **real routes at the real limits**: 9 failed logins, 3 successful logins (not counted), 10th failure still `401`, 11th → `429` (and the right password is then refused too); 10 bookings → `201`, 11th → `429`, another user unaffected. Newman folder **9** loops with `pm.execution.setNextRequest` and asserts on the final `429`, its message, `Retry-After: 900` and `RateLimit-Policy: 10;w=900` | `api/tests/rateLimits.test.js`, Newman folder 9, §12 |
+| 2 | `npm audit --omit=dev` reported an advisory; re-run audits close to submission | Re-run on 28-Oct-2026: the API had 1 high (`body-parser`) and 2 moderate (`qs`, `ip-address`) advisories. `npm audit fix` (lock-file only) → **0** for API and client, re-tested (98 tests, Newman 196/196) | `api/package-lock.json`, §14.1; CI `security` job fails on any new high/critical |
+| 3 | The CSP lived in `vite.config.js` and would disappear behind nginx | The same policy is set by nginx in the client container (plus COEP/CORP added after ZAP) and checked by the CI smoke test | `client/nginx/security-headers.conf`, §7.5 |
+| 4 | Race in `cancelBooking`: two simultaneous cancels could write two refunds | The status change is now one atomic `findOneAndUpdate({ _id, status: 'confirmed' }, …)` **before** the refund is written; the loser gets `409`. If the refund cannot be recorded the booking is put back to `confirmed`. `completeBooking` uses the same guard, so a booking can no longer end up both completed and cancelled | `api/src/services/bookingService.js` (`leaveConfirmed`); two race tests in `api/tests/bookings.test.js` (both fail on the old code) |
+| 5 | Rename `docs/screenshots/part1/IMG_8137.png` | It was a byte-for-byte duplicate of `Controlled 404 Error.png` and not referenced anywhere, so it was removed | `docs/screenshots/part1/` |
 
 ---
 
@@ -231,8 +241,8 @@ hustlehub-plus-part3/
 │   ├── server.js                      # HTTPS bootstrap, graceful shutdown + log flush
 │   ├── scripts/                       # generateCert · seedAdmin · seedDemo · runNewman · healthcheck
 │   ├── postman/
-│   │   ├── HustleHub-Part3.postman_collection.json   # 9 folders, 87 requests (91 executed), 172 assertions
-│   │   └── buildPart3Collection.js    # Generates Part 3 = Part 2 + tax + security folders
+│   │   ├── HustleHub-Part3.postman_collection.json   # 10 folders, 93 requests (110 executed), 196 assertions
+│   │   └── buildPart3Collection.js    # Generates Part 3 = Part 2 + tax + security + rate-limit folders
 │   ├── src/
 │   │   ├── app.js                     # Middleware order, security monitor start-up
 │   │   ├── config/env.js              # Fail-fast config incl. lockout, alert, trust-proxy settings
@@ -242,7 +252,7 @@ hustlehub-plus-part3/
 │   │   ├── middleware/                # auth (JWT + revocation) · httpLogger · rateLimiter · sanitizeRequest
 │   │   │                              # · securityHeaders · errorHandler · validators/
 │   │   └── utils/                     # logger (redaction, Better Stack) · requestContext · jwt · sanitize
-│   └── tests/                         # 94 Vitest + Supertest tests (auth, gigs, bookings, tax, security, Part 3 features)
+│   └── tests/                         # 98 Vitest + Supertest tests (auth, gigs, bookings, tax, security, rate limits, Part 3 features)
 ├── client/                            # React 19 + Vite frontend
 │   ├── Dockerfile · .dockerignore
 │   ├── nginx/                         # default.conf · security-headers.conf · 15-generate-cert.sh
@@ -282,7 +292,7 @@ Parts 1 and 2 established the controls below; Part 3 tightened several of them (
 - **P3:** price validation rewritten without a nested-quantifier regex (ReDoS-safe).
 
 ### 7.4 Rate limiting
-Login (10 failed / 15 min / IP), register (20 / 15 min / IP), booking (10 / 15 min / user), global (300 / 15 min / IP), all with `429`, `Retry-After` and `retryAfterSeconds` [15]. **P3:** nginx adds a 20 req/s per-IP limit in front of `/api`, and `TRUST_PROXY=1` makes the API see the **real client IP** behind nginx.
+Login (10 failed / 15 min / IP), register (20 / 15 min / IP), booking (10 / 15 min / user), global (300 / 15 min / IP), all with `429`, `Retry-After` and `retryAfterSeconds` [15]. **P3:** the login and booking limiters are tested on the real routes at these real limits (Vitest and Newman folder 9, §12). nginx adds a 20 req/s per-IP limit in front of `/api`, and `TRUST_PROXY=1` makes the API see the **real client IP** behind nginx.
 
 ### 7.5 Security headers and CSP
 - API: Helmet with `default-src 'none'`, HSTS, `frame-ancestors 'none'`, `no-store` [8][11].
@@ -522,10 +532,10 @@ Retry-After: 900
 
 | Suite | Tool | Command | Result |
 |---|---|---|---|
-| Backend unit + integration | Vitest + Supertest (separate test DB) | `cd api && npm test` | **94 passed** |
+| Backend unit + integration | Vitest + Supertest (separate test DB) | `cd api && npm test` | **98 passed** |
 | Frontend components | Vitest + React Testing Library + user-event [17] | `cd client && npm test` | **68 passed** |
-| API endpoints | Postman collection via **Newman** [16] | `cd api && npm run test:api` | **91 requests, 172 assertions, 0 failed** |
-| API endpoints in Docker | Newman against nginx → API → Mongo | `BASE_URL=https://localhost:8443 npm run test:api` | **91 / 172 / 0 failed** |
+| API endpoints | Postman collection via **Newman** [16] | `cd api && npm run test:api` | **110 requests, 196 assertions, 0 failed** |
+| API endpoints in Docker | Newman against nginx → API → Mongo | `BASE_URL=https://localhost:8443 npm run test:api` | Same collection, run by the CI `docker` job on every push |
 | Static analysis | ESLint (API), oxlint (client) | `npm run lint` | **0 problems** |
 
 Evidence: [`docs/evidence/part3/`](docs/evidence/part3) contains the backend and frontend test output, the Newman CLI output and HTML report, the ESLint output, scan results, Docker status and log samples. Every pipeline run also uploads JUnit, Newman, SARIF, ZAP and container-log artifacts.
@@ -536,13 +546,15 @@ Evidence: [`docs/evidence/part3/`](docs/evidence/part3) contains the backend and
 |---|---|
 | `api/tests/tax.test.js` (16) | Brackets at R99 000 / R300 000 / R1 000 000, older-taxpayer rebates, bracket breakdown sums, negative income, tax-year boundaries, annualisation and effective rate, provisional dates, below-threshold, endpoint scoping, refunds, RBAC, `ageGroup` validation |
 | `api/tests/securityFeatures.test.js` (14) | Lockout (5 → 423, right password refused, unknown email identical, reset on success, masked log), logout revocation, admin revocation, `jti` required, brute-force alert, monitor summary + RBAC, request ids, redaction |
+| `api/tests/rateLimits.test.js` (2) | The **real** login limiter (10 failures per IP; successful logins not counted; 11th failure and then even the right password → `429`) and booking limiter (11th booking → `429`, other users unaffected), with message, `Retry-After` and `RateLimit-Policy` |
+| `api/tests/bookings.test.js` (+2) | Three simultaneous cancels → one `200`, two `409`, exactly one refund; complete vs cancel racing → only one wins |
 | `api/tests/security.test.js` (+3) / `gigs.test.js` (+7) | Prototype-pollution stripping and logging; nested-tag sanitisation; money-format cases (`1e3`, `1500.505`, `12.`) |
 | `client/src/tests/EarningsPage.test.jsx` (8) | Headline figure, tiles, provisional schedule, tooltip on hover, table view, age-group refetch, below-threshold text, safe error, bracket rows |
 | `client/src/tests/AdminPage.test.jsx` (4) · `AuthContext.test.jsx` (2) · `LoginPage.test.jsx` (+1) | Alerts and totals in plain language, period filter, confirm-then-revoke; logout calls the API (also offline); 423 lockout message |
 
-**Postman collection (Part 3):** `api/postman/HustleHub-Part3.postman_collection.json` keeps all 7 Part 2 folders and adds **7. Tax estimate** (values, other freelancer sees R0, client 403, anonymous 401, bad `ageGroup` 400) and **8. Part 3 security features** (request id header, lockout loop with `setNextRequest`, logout, other sessions unaffected, admin revoke, prototype-pollution payload, security monitor totals). The runner injects `baseUrl` and the admin credentials from the environment, and the HTML report omits admin credentials and `Authorization` headers.
+**Postman collection (Part 3):** `api/postman/HustleHub-Part3.postman_collection.json` keeps all 7 Part 2 folders and adds **7. Tax estimate** (values, other freelancer sees R0, client 403, anonymous 401, bad `ageGroup` 400) and **8. Part 3 security features** (request id header, lockout loop with `setNextRequest`, logout, other sessions unaffected, admin revoke, prototype-pollution payload, security monitor totals) and **9. Rate limits on the real routes** (a fresh client books until the 11th booking gets `429`; a second user can still book; wrong-password logins with a new email each time, so the per-account lockout never hides the per-IP limiter, until the limiter answers `429`; the right password from the blocked IP is then refused with no token). Both loops use `pm.execution.setNextRequest`. The runner injects `baseUrl` and the admin credentials from the environment, and the HTML report omits admin credentials and `Authorization` headers.
 
-> The login limiter allows 10 failed logins per IP per 15 minutes, and one full run uses about 7. Restart the API (or wait 15 minutes) before running the collection twice in a row against the same server.
+> The login limiter allows 10 failed logins per IP per 15 minutes, and folder 9 deliberately uses up whatever the earlier folders left (7 failures, so 3 more, then `429`). Restart the API (the limiter store is in memory) or wait 15 minutes before running the collection again against the same server.
 
 ---
 
@@ -552,10 +564,10 @@ Evidence: [`docs/evidence/part3/`](docs/evidence/part3) contains the backend and
 
 ```mermaid
 flowchart LR
-    push(["push / PR"]) --> B["backend<br/>npm ci · ESLint · 94 tests<br/>(MongoDB service)"]
+    push(["push / PR"]) --> B["backend<br/>npm ci · ESLint · 98 tests<br/>(MongoDB service)"]
     push --> F["frontend<br/>npm ci · oxlint · 68 tests · vite build"]
     push --> S["security<br/>npm audit · Semgrep · Gitleaks"]
-    B --> N["api-tests<br/>HTTPS API + Newman<br/>(172 assertions)"]
+    B --> N["api-tests<br/>HTTPS API + Newman<br/>(196 assertions)"]
     B --> D["docker<br/>build images · Trivy<br/>compose up --wait · smoke tests<br/>Newman via nginx · OWASP ZAP"]
     F --> D
     N --> P["publish (main only)<br/>push api + client images<br/>to Docker Hub with SBOM + provenance"]
@@ -592,7 +604,7 @@ Evidence: [Actions runs](https://github.com/evanildo26/hustlehub-plus-part3/acti
 | **Semgrep** (155 community rules) [23] | SAST | All tracked code, nginx config, Dockerfiles, workflows | 2 findings (nginx), then 28 (workflows) | **0** |
 | **CodeQL** (security-extended) [27] | Semantic SAST | API + client JavaScript (docs/ excluded) | 13 alerts | **0 open** (10 fixed, 3 reviewed false positives dismissed with reasons) |
 | **oxlint** | Lint | Client | 1 warning | **0** |
-| **npm audit** (`--omit=dev`) | Dependency scan | API + client production deps | 0 | **0** |
+| **npm audit** (`--omit=dev`) | Dependency scan | API + client production deps | 0; re-run 28-Oct-2026: API 1 high (`body-parser`) + 2 moderate (`qs`, `ip-address`) | **0** (`npm audit fix`, lock file only) |
 | **Trivy** [24] | Image scan | Both images | API: 1 CRITICAL + 10 HIGH; client: 40 HIGH | **0** fixable HIGH/CRITICAL |
 | **Gitleaks** [26] | Secret scan | Whole git history | 0 leaks | **0** |
 | **OWASP ZAP** baseline [25] | DAST | Running Docker stack | 0 FAIL, 5 WARN, 62 PASS | **0 FAIL, 0 WARN, 64 PASS** (3 documented ignores) |
@@ -638,7 +650,7 @@ How HustleHub+ addresses common threats, mapped to the OWASP Top 10 (2021) [3].
 | Injection: ReDoS / regex | Search, price | Search input escaped + 50-char cap; price checked without nested quantifiers | Tests; ESLint `detect-unsafe-regex` in CI |
 | Injection: prototype pollution | Any JSON body | `__proto__`/`constructor`/`prototype` stripped and logged | Tests; Newman folder 8 |
 | **Cross-site scripting (A03)** | Gig titles/descriptions, booking notes, names | Server strips HTML and angle brackets before storage; React escapes all output; no `dangerouslySetInnerHTML`; **CSP `script-src 'self'`**, no inline scripts, `object-src 'none'`; fonts and icons self-hosted | `GigCard` test (markup rendered as text); Newman XSS cases; ZAP; browser run with 0 CSP violations |
-| **Authentication weaknesses (A07)**: brute force / stuffing | Login | Per-IP failed-login limiter **+ per-account lockout** (423) + `SECURITY_ALERT` | Tests; Newman lockout loop; alert test |
+| **Authentication weaknesses (A07)**: brute force / stuffing | Login | Per-IP failed-login limiter **+ per-account lockout** (423) + `SECURITY_ALERT` | Tests (real limiter: 11th failure → 429); Newman lockout and limiter loops; alert test |
 | Account enumeration | Login, lockout | Same message and timing for unknown email and wrong password; lockout keyed by typed email | Tests (identical responses) |
 | Weak or stolen tokens | Every protected route | HS256 pinned, `iss`/`aud`/`exp`, 32+ char secret, **logout deny-list**, **admin revocation**, `jti` required, role from DB | Tests (forged, `alg:none`, logged-out, revoked, no-`jti`) |
 | Weak passwords | Registration | 8+ chars, upper, lower, number, symbol; bcrypt cost 12 | Tests; frontend checklist |
@@ -651,7 +663,8 @@ How HustleHub+ addresses common threats, mapped to the OWASP Top 10 (2021) [3].
 | **Software and data integrity (A08)** | CI/CD, financial records | Pinned Actions, least-privilege workflow permissions, SBOM + provenance on images; append-only transactions | Semgrep workflow rules; pipeline |
 | **Logging and monitoring failures (A09)** | Whole system | Structured, redacted logs with request ids; cloud logging; Security monitor; automatic alerts | Logging tests; Better Stack evidence |
 | **SSRF (A10)** | — | The API makes no requests based on user input; its only outbound call is to the fixed Better Stack host | Code review |
-| Denial of service | API | Rate limits (API + nginx), 10 kB body cap (nginx 16 kB), bounded queries (`limit`), bounded log queue | Tests (413, 429) |
+| Denial of service | API | Rate limits (API + nginx), 10 kB body cap (nginx 16 kB), bounded queries (`limit`), bounded log queue | Tests (413; 429 on the real login and booking routes) |
+| Race conditions on money | Cancel / complete a booking | Atomic status change (`findOneAndUpdate` filtered on `status: 'confirmed'`) before the refund is written; rollback if the refund fails | Concurrency tests (one refund for three simultaneous cancels) |
 | Secrets exposure | Repo, images, logs | `.env` git-ignored and in `.dockerignore`; random CI secrets; Gitleaks; log redaction | Gitleaks in CI; redaction test |
 | CSRF | State-changing requests | No cookies: the JWT is sent only as a Bearer header (`credentials: 'omit'`), so a forged cross-site request carries no credentials | Design |
 
@@ -680,7 +693,7 @@ Pipeline, Docker, scanning and logging evidence:
 | Containers running and healthy | `docs/screenshots/part3/10-docker-compose-running.png`, `13-docker-desktop-containers-logs.png`, `docs/evidence/part3/docker-compose-ps.txt` |
 | Better Stack Live tail (cloud logging) | `docs/screenshots/part3/11-better-stack-logs.png` (security events), `12-better-stack-http-requests.png` (HTTP traffic) |
 | CodeQL results (13 alerts: 10 fixed, 3 reviewed and dismissed, 0 open) | `docs/evidence/part3/codeql-alerts.txt` and the repository Security → Code scanning tab |
-| Newman (Docker stack) | `docs/evidence/part3/newman-report.html`, `newman-cli-output.txt` |
+| Newman (latest local run, 110 requests / 196 assertions) | `docs/evidence/part3/newman-report.html`, `newman-cli-output.txt` |
 | OWASP ZAP report | `docs/evidence/part3/zap-report.html` |
 | Semgrep (SARIF, 0 results), Gitleaks (0 leaks), ESLint (0 problems) | `semgrep-results.sarif`, `gitleaks-report.json`, `eslint-output.txt` in `docs/evidence/part3/` |
 | Newman inside CI (API job and Docker job) | `newman-report-ci-api.html`, `newman-report-ci-docker.html` |
@@ -696,10 +709,10 @@ Part 1 and Part 2 evidence remains in `docs/screenshots/part1`, `docs/screenshot
 
 - **Tax is an estimate:** individual tables only; no other income, expenses, retirement or medical credits; turnover tax (SA's alternative for micro-businesses) not modelled.
 - **Single-node state:** the in-memory rate limiters and alert windows assume one API instance (Redis would share them across replicas).
-- **No multi-document transactions:** standalone MongoDB; `bookingService` rolls back manually if recording a payment fails (a replica set would allow ACID transactions).
+- **No multi-document transactions:** standalone MongoDB; `bookingService` rolls back manually if recording a payment or refund fails, and changes a booking's status atomically so concurrent requests cannot both succeed (a replica set would allow ACID transactions).
 - **Self-signed certificates** locally and in Docker; a real deployment would mount a CA-issued certificate into nginx and set its own domain in `server_name`.
 - **Delivery, not deployment:** the pipeline publishes tested images to Docker Hub. Running them on a cloud host would be the next step.
-- **Dev-only advisories:** `npm audit --omit=dev` is clean. Remaining advisories are in dev tooling (Newman and its reporter, the certificate generator) that never ships in an image.
+- **Dev-only advisories:** `npm audit --omit=dev` is clean (re-checked 28-Oct-2026). Remaining advisories are in dev tooling (Newman and its reporter, the certificate generator) that never ships in an image.
 
 ---
 

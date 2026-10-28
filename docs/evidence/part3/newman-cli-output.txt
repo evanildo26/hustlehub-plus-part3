@@ -4,268 +4,268 @@ HustleHub+ API - Part 3
 
 □ 0. Setup - accounts and tokens
 └ Health check
-  GET https://localhost:8443/api/health [200 OK, 923B, 70ms]
+  GET https://localhost:5443/api/health [200 OK, 935B, 44ms]
   √  Status is 200
   √  API reports healthy
 
 └ Register freelancer
-  POST https://localhost:8443/api/auth/register [201 Created, 1.22kB, 977ms]
+  POST https://localhost:5443/api/auth/register [201 Created, 1.23kB, 402ms]
   √  Status is 201
   √  Password is never returned
   √  Role is freelancer
 
 └ Register second freelancer
-  POST https://localhost:8443/api/auth/register [201 Created, 1.22kB, 359ms]
+  POST https://localhost:5443/api/auth/register [201 Created, 1.23kB, 354ms]
   √  Status is 201
   √  Password is never returned
   √  Role is freelancer
 
 └ Register client
-  POST https://localhost:8443/api/auth/register [201 Created, 1.21kB, 366ms]
+  POST https://localhost:5443/api/auth/register [201 Created, 1.22kB, 343ms]
   √  Status is 201
   √  Password is never returned
   √  Role is client
 
 └ Register second client (outsider)
-  POST https://localhost:8443/api/auth/register [201 Created, 1.21kB, 394ms]
+  POST https://localhost:5443/api/auth/register [201 Created, 1.22kB, 337ms]
   √  Status is 201
   √  Password is never returned
   √  Role is client
 
 └ Login freelancer
-  POST https://localhost:8443/api/auth/login [200 OK, 1.59kB, 389ms]
+  POST https://localhost:5443/api/auth/login [200 OK, 1.6kB, 351ms]
   √  Status is 200
   √  Returns a JWT
 
 └ Login second freelancer
-  POST https://localhost:8443/api/auth/login [200 OK, 1.59kB, 360ms]
+  POST https://localhost:5443/api/auth/login [200 OK, 1.6kB, 344ms]
   √  Status is 200
   √  Returns a JWT
 
 └ Login client
-  POST https://localhost:8443/api/auth/login [200 OK, 1.57kB, 346ms]
+  POST https://localhost:5443/api/auth/login [200 OK, 1.58kB, 342ms]
   √  Status is 200
   √  Returns a JWT
 
 └ Login second client
-  POST https://localhost:8443/api/auth/login [200 OK, 1.57kB, 358ms]
+  POST https://localhost:5443/api/auth/login [200 OK, 1.58kB, 358ms]
   √  Status is 200
   √  Returns a JWT
 
 └ Login admin (seeded)
-  POST https://localhost:8443/api/auth/login [200 OK, 1.54kB, 358ms]
+  POST https://localhost:5443/api/auth/login [200 OK, 1.55kB, 339ms]
   √  Status is 200
   √  Role is admin
 
 □ 1. Authentication - invalid scenarios
 └ Register duplicate email -> 409
-  POST https://localhost:8443/api/auth/register [409 Conflict, 986B, 17ms]
+  POST https://localhost:5443/api/auth/register [409 Conflict, 998B, 9ms]
   √  Status is 409
   √  Error uses the standard safe shape
 
 └ Register weak password -> 400
-  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.06kB, 13ms]
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 1.07kB, 5ms]
   √  Status is 400
   √  Reports a validation error on "password"
 
 └ Register self-assigned admin -> 400
-  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.05kB, 14ms]
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 1.06kB, 5ms]
   √  Status is 400
   √  Reports a validation error on "role"
 
 └ Register with extra isAdmin field -> 400
-  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.03kB, 10ms]
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 1.05kB, 5ms]
   √  Status is 400
   √  Reports a validation error on "isAdmin"
 
 └ Register script in name -> 400
-  POST https://localhost:8443/api/auth/register [400 Bad Request, 1.07kB, 14ms]
+  POST https://localhost:5443/api/auth/register [400 Bad Request, 1.08kB, 5ms]
   √  Status is 400
   √  Reports a validation error on "name"
 
 └ Login with NoSQL operator -> 400
-  POST https://localhost:8443/api/auth/login [400 Bad Request, 1.08kB, 14ms]
+  POST https://localhost:5443/api/auth/login [400 Bad Request, 1.09kB, 6ms]
   √  Status is 400
   √  No token issued
 
 └ Login wrong password -> 401
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 365ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 354ms]
   √  Status is 401
 
 └ Login unknown user -> 401 (same message)
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 356ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 361ms]
   √  Status is 401
   √  Message identical to wrong-password case (no account enumeration)
 
 └ Profile without token -> 401
-  GET https://localhost:8443/api/users/me [401 Unauthorized, 1.01kB, 14ms]
+  GET https://localhost:5443/api/users/me [401 Unauthorized, 1.02kB, 4ms]
   √  Status is 401
   √  Error uses the standard safe shape
 
 └ Profile with tampered token -> 401
-  GET https://localhost:8443/api/users/me [401 Unauthorized, 999B, 17ms]
+  GET https://localhost:5443/api/users/me [401 Unauthorized, 1.01kB, 8ms]
   √  Status is 401
 
 └ Profile with valid token -> 200
-  GET https://localhost:8443/api/users/me [200 OK, 1.13kB, 22ms]
+  GET https://localhost:5443/api/users/me [200 OK, 1.14kB, 8ms]
   √  Status is 200
   √  Returns own profile
 
 □ 2. Gigs - management, RBAC and ownership
 └ Freelancer creates gig -> 201
-  POST https://localhost:8443/api/gigs [201 Created, 1.33kB, 41ms]
+  POST https://localhost:5443/api/gigs [201 Created, 1.34kB, 13ms]
   √  Status is 201
   √  Owner is the logged-in freelancer
 
 └ Create gig with HTML -> tags stripped
-  POST https://localhost:8443/api/gigs [201 Created, 1.29kB, 29ms]
+  POST https://localhost:5443/api/gigs [201 Created, 1.31kB, 12ms]
   √  Status is 201
   √  No markup stored
 
 └ Client creates gig -> 403
-  POST https://localhost:8443/api/gigs [403 Forbidden, 998B, 18ms]
+  POST https://localhost:5443/api/gigs [403 Forbidden, 1.01kB, 9ms]
   √  Status is 403
   √  Error uses the standard safe shape
 
 └ Anonymous creates gig -> 401
-  POST https://localhost:8443/api/gigs [401 Unauthorized, 1.01kB, 12ms]
+  POST https://localhost:5443/api/gigs [401 Unauthorized, 1.02kB, 4ms]
   √  Status is 401
 
 └ Create gig with invalid price -> 400
-  POST https://localhost:8443/api/gigs [400 Bad Request, 1.05kB, 16ms]
+  POST https://localhost:5443/api/gigs [400 Bad Request, 1.07kB, 9ms]
   √  Status is 400
   √  Reports a validation error on "price"
 
 └ Create gig for another owner -> 400
-  POST https://localhost:8443/api/gigs [400 Bad Request, 1.04kB, 14ms]
+  POST https://localhost:5443/api/gigs [400 Bad Request, 1.05kB, 7ms]
   √  Status is 400
   √  Reports a validation error on "freelancer"
 
 └ Browse gigs (public) -> 200
-  GET https://localhost:8443/api/gigs?limit=50 [200 OK, 15.63kB, 36ms]
+  GET https://localhost:5443/api/gigs?limit=50 [200 OK, 15.26kB, 25ms]
   √  Status is 200
   √  New gig is listed
   √  Freelancer emails are not exposed
 
 └ Search gigs with regex characters -> literal match
-  GET https://localhost:8443/api/gigs?search=.* [200 OK, 992B, 16ms]
+  GET https://localhost:5443/api/gigs?search=.* [200 OK, 1kB, 8ms]
   √  Status is 200
   √  ".*" is not treated as a wildcard
 
 └ Get gig by id -> 200
-  GET https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [200 OK, 1.32kB, 19ms]
+  GET https://localhost:5443/api/gigs/6ae21b6df6d9e0210b6a0759 [200 OK, 1.33kB, 8ms]
   √  Status is 200
 
 └ Get gig with invalid id -> 400
-  GET https://localhost:8443/api/gigs/not-a-valid-id [400 Bad Request, 1.02kB, 10ms]
+  GET https://localhost:5443/api/gigs/not-a-valid-id [400 Bad Request, 1.03kB, 4ms]
   √  Status is 400
   √  Reports a validation error on "id"
 
 └ Other freelancer edits gig -> 403
-  PATCH https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [403 Forbidden, 982B, 19ms]
+  PATCH https://localhost:5443/api/gigs/6ae21b6df6d9e0210b6a0759 [403 Forbidden, 994B, 9ms]
   √  Status is 403
   √  Error uses the standard safe shape
 
 └ Other freelancer deletes gig -> 403
-  DELETE https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [403 Forbidden, 982B, 18ms]
+  DELETE https://localhost:5443/api/gigs/6ae21b6df6d9e0210b6a0759 [403 Forbidden, 994B, 8ms]
   √  Status is 403
 
 └ Owner edits gig -> 200
-  PATCH https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [200 OK, 1.33kB, 26ms]
+  PATCH https://localhost:5443/api/gigs/6ae21b6df6d9e0210b6a0759 [200 OK, 1.34kB, 15ms]
   √  Status is 200
   √  Update applied
 
 └ Owner deletes own gig -> 200
-  DELETE https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e6 [200 OK, 965B, 29ms]
+  DELETE https://localhost:5443/api/gigs/6ae21b6ef6d9e0210b6a075a [200 OK, 977B, 16ms]
   √  Status is 200
 
 └ Freelancer lists own gigs -> 200
-  GET https://localhost:8443/api/gigs/mine [200 OK, 1.29kB, 18ms]
+  GET https://localhost:5443/api/gigs/mine [200 OK, 1.3kB, 8ms]
   √  Status is 200
   √  Only own gigs returned
 
 □ 3. Bookings - simulated payment and access control
 └ Client books gig -> 201 + transaction
-  POST https://localhost:8443/api/bookings [201 Created, 1.88kB, 56ms]
+  POST https://localhost:5443/api/bookings [201 Created, 1.89kB, 15ms]
   √  Status is 201
   √  Booking confirmed with simulated payment reference
   √  Amount comes from the gig price
   √  Payment transaction recorded with 10% fee
 
 └ Freelancer books gig -> 403
-  POST https://localhost:8443/api/bookings [403 Forbidden, 998B, 15ms]
+  POST https://localhost:5443/api/bookings [403 Forbidden, 1.01kB, 7ms]
   √  Status is 403
 
 └ Client sets own amount -> 400
-  POST https://localhost:8443/api/bookings [400 Bad Request, 1.03kB, 14ms]
+  POST https://localhost:5443/api/bookings [400 Bad Request, 1.04kB, 6ms]
   √  Status is 400
   √  Reports a validation error on "amount"
 
 └ Book with invalid gig id -> 400
-  POST https://localhost:8443/api/bookings [400 Bad Request, 1.03kB, 23ms]
+  POST https://localhost:5443/api/bookings [400 Bad Request, 1.04kB, 6ms]
   √  Status is 400
   √  Reports a validation error on "gigId"
 
 └ Outsider views booking -> 403
-  GET https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea [403 Forbidden, 987B, 20ms]
+  GET https://localhost:5443/api/bookings/6ae21b6ff6d9e0210b6a075e [403 Forbidden, 999B, 12ms]
   √  Status is 403
 
 └ Client lists own bookings -> 200
-  GET https://localhost:8443/api/bookings [200 OK, 1.39kB, 18ms]
+  GET https://localhost:5443/api/bookings [200 OK, 1.4kB, 10ms]
   √  Status is 200
   √  Contains the new booking
 
 └ Freelancer views bookings on their gigs -> 200
-  GET https://localhost:8443/api/bookings [200 OK, 1.39kB, 26ms]
+  GET https://localhost:5443/api/bookings [200 OK, 1.4kB, 8ms]
   √  Status is 200
   √  Freelancer sees the booking
 
 └ Outsider lists bookings -> empty
-  GET https://localhost:8443/api/bookings [200 OK, 937B, 13ms]
+  GET https://localhost:5443/api/bookings [200 OK, 949B, 7ms]
   √  Status is 200
   √  No bookings leak to other clients
 
 └ Delete gig with confirmed booking -> 409
-  DELETE https://localhost:8443/api/gigs/6acd8e2e7328430d0fdd75e5 [409 Conflict, 1.04kB, 18ms]
+  DELETE https://localhost:5443/api/gigs/6ae21b6df6d9e0210b6a0759 [409 Conflict, 1.05kB, 9ms]
   √  Status is 409
 
 └ Client completes booking -> 403
-  PATCH https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea/complete [403 Forbidden, 998B, 14ms]
+  PATCH https://localhost:5443/api/bookings/6ae21b6ff6d9e0210b6a075e/complete [403 Forbidden, 1.01kB, 7ms]
   √  Status is 403
 
 └ Freelancer completes booking -> 200
-  PATCH https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea/complete [200 OK, 1.47kB, 23ms]
+  PATCH https://localhost:5443/api/bookings/6ae21b6ff6d9e0210b6a075e/complete [200 OK, 1.48kB, 11ms]
   √  Status is 200
   √  Status is completed
 
 └ Cancel completed booking -> 409
-  PATCH https://localhost:8443/api/bookings/6acd8e307328430d0fdd75ea/cancel [409 Conflict, 987B, 19ms]
+  PATCH https://localhost:5443/api/bookings/6ae21b6ff6d9e0210b6a075e/cancel [409 Conflict, 999B, 9ms]
   √  Status is 409
 
 └ Client books gig again -> 201
-  POST https://localhost:8443/api/bookings [201 Created, 1.85kB, 29ms]
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 10ms]
   √  Status is 201
 
 └ Client cancels booking -> 200 + refund
-  PATCH https://localhost:8443/api/bookings/6acd8e317328430d0fdd75f0/cancel [200 OK, 2.01kB, 25ms]
+  PATCH https://localhost:5443/api/bookings/6ae21b70f6d9e0210b6a0764/cancel [200 OK, 2.03kB, 13ms]
   √  Status is 200
   √  Booking cancelled by client
   √  Refund transaction reverses the payment
 
 □ 4. Transactions and income tracking
 └ Client transactions -> 2 payments + 1 refund
-  GET https://localhost:8443/api/transactions [200 OK, 2.47kB, 18ms]
+  GET https://localhost:5443/api/transactions [200 OK, 2.48kB, 9ms]
   √  Status is 200
   √  Three records for this client
   √  All belong to the client
 
 └ Outsider transactions -> empty
-  GET https://localhost:8443/api/transactions [200 OK, 937B, 15ms]
+  GET https://localhost:5443/api/transactions [200 OK, 949B, 8ms]
   √  Status is 200
   √  No transactions leak
 
 └ Freelancer income summary -> net of refund
-  GET https://localhost:8443/api/income/summary [200 OK, 1.29kB, 23ms]
+  GET https://localhost:5443/api/income/summary [200 OK, 1.3kB, 16ms]
   √  Status is 200
   √  Gross R1000 after one refund
   √  Net R900 after 10% platform fee
@@ -273,48 +273,48 @@ HustleHub+ API - Part 3
   √  Monthly breakdown present
 
 └ Other freelancer income -> zero
-  GET https://localhost:8443/api/income/summary [200 OK, 1.11kB, 17ms]
+  GET https://localhost:5443/api/income/summary [200 OK, 1.12kB, 16ms]
   √  Status is 200
   √  Income is attributed to the correct freelancer only
 
 └ Client income summary -> 403
-  GET https://localhost:8443/api/income/summary [403 Forbidden, 998B, 15ms]
+  GET https://localhost:5443/api/income/summary [403 Forbidden, 1.01kB, 7ms]
   √  Status is 403
 
 □ 5. Admin capabilities
 └ Client lists users -> 403
-  GET https://localhost:8443/api/admin/users [403 Forbidden, 998B, 13ms]
+  GET https://localhost:5443/api/admin/users [403 Forbidden, 1.01kB, 7ms]
   √  Status is 403
 
 └ Freelancer views stats -> 403
-  GET https://localhost:8443/api/admin/stats [403 Forbidden, 998B, 15ms]
+  GET https://localhost:5443/api/admin/stats [403 Forbidden, 1.01kB, 8ms]
   √  Status is 403
 
 └ Admin lists users -> 200 (no hashes)
-  GET https://localhost:8443/api/admin/users [200 OK, 6.8kB, 15ms]
+  GET https://localhost:5443/api/admin/users [200 OK, 6.42kB, 10ms]
   √  Status is 200
   √  No password hashes in response
 
 └ Admin views platform stats -> 200
-  GET https://localhost:8443/api/admin/stats [200 OK, 1.06kB, 23ms]
+  GET https://localhost:5443/api/admin/stats [200 OK, 1.07kB, 10ms]
   √  Status is 200
   √  Stats include bookings and revenue
 
 └ Second freelancer creates gig -> 201
-  POST https://localhost:8443/api/gigs [201 Created, 1.33kB, 17ms]
+  POST https://localhost:5443/api/gigs [201 Created, 1.34kB, 10ms]
   √  Status is 201
 
 └ Admin removes any gig (moderation) -> 200
-  DELETE https://localhost:8443/api/gigs/6acd8e327328430d0fdd75f6 [200 OK, 965B, 20ms]
+  DELETE https://localhost:5443/api/gigs/6ae21b71f6d9e0210b6a076a [200 OK, 977B, 12ms]
   √  Status is 200
 
 └ Admin cannot book gigs -> 403
-  POST https://localhost:8443/api/bookings [403 Forbidden, 998B, 16ms]
+  POST https://localhost:5443/api/bookings [403 Forbidden, 1.01kB, 7ms]
   √  Status is 403
 
 □ 6. Security controls
 └ Security headers present
-  GET https://localhost:8443/api/health [200 OK, 923B, 9ms]
+  GET https://localhost:5443/api/health [200 OK, 935B, 4ms]
   √  Status is 200
   √  Content-Security-Policy is strict
   √  HSTS enabled
@@ -324,22 +324,22 @@ HustleHub+ API - Part 3
   √  Framework not disclosed
 
 └ Data responses are not cached
-  GET https://localhost:8443/api/gigs [200 OK, 6.06kB, 24ms]
+  GET https://localhost:5443/api/gigs [200 OK, 6.13kB, 14ms]
   √  Cache-Control: no-store
 
 └ Unknown route -> safe 404
-  GET https://localhost:8443/api/does-not-exist [404 Not Found, 988B, 15ms]
+  GET https://localhost:5443/api/does-not-exist [404 Not Found, 1kB, 4ms]
   √  Status is 404
   √  Error uses the standard safe shape
 
 └ Malformed JSON -> 400
-  POST https://localhost:8443/api/auth/login [400 Bad Request, 939B, 11ms]
+  POST https://localhost:5443/api/auth/login [400 Bad Request, 951B, 7ms]
   √  Status is 400
   √  Error uses the standard safe shape
 
 □ 7. Tax estimate (Part 3)
 └ Freelancer tax estimate -> 200
-  GET https://localhost:8443/api/income/tax-estimate [200 OK, 3.76kB, 18ms]
+  GET https://localhost:5443/api/income/tax-estimate [200 OK, 3.77kB, 11ms]
   √  Status is 200
   √  Uses net earnings this tax year (R900 after the refund)
   √  Gross and platform fee for the year
@@ -350,154 +350,246 @@ HustleHub+ API - Part 3
   √  Calculation method and disclaimer explained
 
 └ Age group 65 to 74 adds the secondary rebate
-  GET https://localhost:8443/api/income/tax-estimate?ageGroup=65to74 [200 OK, 3.76kB, 19ms]
+  GET https://localhost:5443/api/income/tax-estimate?ageGroup=65to74 [200 OK, 3.77kB, 10ms]
   √  Status is 200
   √  Rebate is larger than the primary rebate alone
 
 └ Invalid age group -> 400
-  GET https://localhost:8443/api/income/tax-estimate?ageGroup=everyone [400 Bad Request, 1.06kB, 17ms]
+  GET https://localhost:5443/api/income/tax-estimate?ageGroup=everyone [400 Bad Request, 1.07kB, 7ms]
   √  Status is 400
   √  Field error for ageGroup
 
 └ Other freelancer sees only their own (zero) income
-  GET https://localhost:8443/api/income/tax-estimate [200 OK, 3.73kB, 17ms]
+  GET https://localhost:5443/api/income/tax-estimate [200 OK, 3.75kB, 10ms]
   √  Status is 200
   √  No income leaks between freelancers
 
 └ Client tax estimate -> 403
-  GET https://localhost:8443/api/income/tax-estimate [403 Forbidden, 998B, 16ms]
+  GET https://localhost:5443/api/income/tax-estimate [403 Forbidden, 1.01kB, 10ms]
   √  Status is 403
 
 └ Anonymous tax estimate -> 401
-  GET https://localhost:8443/api/income/tax-estimate [401 Unauthorized, 1.01kB, 10ms]
+  GET https://localhost:5443/api/income/tax-estimate [401 Unauthorized, 1.02kB, 4ms]
   √  Status is 401
 
 □ 8. Part 3 security features
 └ Every response has an X-Request-Id
-  GET https://localhost:8443/api/health [200 OK, 923B, 10ms]
+  GET https://localhost:5443/api/health [200 OK, 935B, 5ms]
   √  Status is 200
   √  Request id header present
 
 └ Register lockout test user
-  POST https://localhost:8443/api/auth/register [201 Created, 1.21kB, 351ms]
+  POST https://localhost:5443/api/auth/register [201 Created, 1.22kB, 339ms]
   √  Status is 201
 
 └ Wrong password until the account locks (4 x 401, then 423)
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 386ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 348ms]
   √  Attempt 1: 401 invalid credentials
-  ┌
-  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
-  │ .execution.setNextRequest()" instead.'
-  └
 
 Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
 
 └ Wrong password until the account locks (4 x 401, then 423)
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 385ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 339ms]
   √  Attempt 2: 401 invalid credentials
-  ┌
-  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
-  │ .execution.setNextRequest()" instead.'
-  └
 
 Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
 
 └ Wrong password until the account locks (4 x 401, then 423)
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 375ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 339ms]
   √  Attempt 3: 401 invalid credentials
-  ┌
-  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
-  │ .execution.setNextRequest()" instead.'
-  └
 
 Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
 
 └ Wrong password until the account locks (4 x 401, then 423)
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 350ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 342ms]
   √  Attempt 4: 401 invalid credentials
-  ┌
-  │ 'Using "postman.setNextRequest" is deprecated. Use "pm
-  │ .execution.setNextRequest()" instead.'
-  └
 
 Attempting to set next request to Wrong password until the account locks (4 x 401, then 423)
 
 └ Wrong password until the account locks (4 x 401, then 423)
-  POST https://localhost:8443/api/auth/login [423 Locked, 1.04kB, 352ms]
+  POST https://localhost:5443/api/auth/login [423 Locked, 1.05kB, 338ms]
   √  5th failure locks the account: 423
   √  Lockout message and Retry-After header
 
 └ Correct password while locked -> still 423 (no token)
-  POST https://localhost:8443/api/auth/login [423 Locked, 1.04kB, 12ms]
+  POST https://localhost:5443/api/auth/login [423 Locked, 1.05kB, 6ms]
   √  Status is 423
   √  No token issued
 
 └ Login client again (second session)
-  POST https://localhost:8443/api/auth/login [200 OK, 1.57kB, 344ms]
+  POST https://localhost:5443/api/auth/login [200 OK, 1.58kB, 336ms]
   √  Status is 200
 
 └ Second session works -> 200
-  GET https://localhost:8443/api/users/me [200 OK, 1.13kB, 13ms]
+  GET https://localhost:5443/api/users/me [200 OK, 1.14kB, 6ms]
   √  Status is 200
 
 └ Logout revokes that token -> 200
-  POST https://localhost:8443/api/auth/logout [200 OK, 965B, 22ms]
+  POST https://localhost:5443/api/auth/logout [200 OK, 977B, 9ms]
   √  Status is 200
 
 └ Logged-out token is rejected -> 401
-  GET https://localhost:8443/api/users/me [401 Unauthorized, 995B, 14ms]
+  GET https://localhost:5443/api/users/me [401 Unauthorized, 1.01kB, 7ms]
   √  Status is 401
   √  Session ended message
 
 └ Other sessions keep working -> 200
-  GET https://localhost:8443/api/users/me [200 OK, 1.13kB, 19ms]
+  GET https://localhost:5443/api/users/me [200 OK, 1.14kB, 6ms]
   √  Status is 200
 
 └ Client cannot revoke sessions -> 403
-  POST https://localhost:8443/api/admin/users/6acd8e2a7328430d0fdd75da/revoke-sessions [403 Forbidden, 998B, 11ms]
+  POST https://localhost:5443/api/admin/users/6ae21b69f6d9e0210b6a074e/revoke-sessions [403 Forbidden, 1.01kB, 6ms]
   √  Status is 403
 
 └ Admin revokes all sessions of the second client -> 200
-  POST https://localhost:8443/api/admin/users/6acd8e2a7328430d0fdd75da/revoke-sessions [200 OK, 988B, 17ms]
+  POST https://localhost:5443/api/admin/users/6ae21b69f6d9e0210b6a074e/revoke-sessions [200 OK, 1kB, 9ms]
   √  Status is 200
 
 └ Second client's old token is rejected -> 401
-  GET https://localhost:8443/api/users/me [401 Unauthorized, 995B, 16ms]
+  GET https://localhost:5443/api/users/me [401 Unauthorized, 1.01kB, 7ms]
   √  Status is 401
 
 └ Prototype-pollution keys are stripped (no crash)
-  POST https://localhost:8443/api/auth/login [401 Unauthorized, 973B, 355ms]
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 344ms]
   √  Handled as a normal failed login (401), not a 500
 
 └ Admin security monitor shows the lockout -> 200
-  GET https://localhost:8443/api/admin/security-events?hours=1 [200 OK, 17.53kB, 37ms]
+  GET https://localhost:5443/api/admin/security-events?hours=1 [200 OK, 16.84kB, 16ms]
   √  Status is 200
   √  Failed logins counted
   √  Account lock recorded
   √  Recent events listed
 
 └ Freelancer cannot see security events -> 403
-  GET https://localhost:8443/api/admin/security-events [403 Forbidden, 998B, 21ms]
+  GET https://localhost:5443/api/admin/security-events [403 Forbidden, 1.01kB, 8ms]
   √  Status is 403
+
+□ 9. Rate limits on the real routes
+└ Register a fresh client for the booking limit
+  POST https://localhost:5443/api/auth/register [201 Created, 1.23kB, 347ms]
+  √  Status is 201
+
+└ Login fresh client (successful logins do not count)
+  POST https://localhost:5443/api/auth/login [200 OK, 1.59kB, 339ms]
+  √  Status is 200
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 10ms]
+  √  Booking 1 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 10ms]
+  √  Booking 2 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 9ms]
+  √  Booking 3 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 9ms]
+  √  Booking 4 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 11ms]
+  √  Booking 5 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 10ms]
+  √  Booking 6 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 12ms]
+  √  Booking 7 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 11ms]
+  √  Booking 8 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 12ms]
+  √  Booking 9 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 11ms]
+  √  Booking 10 of 10: 201
+
+Attempting to set next request to Book until the booking limiter answers (10 x 201, then 429)
+
+└ Book until the booking limiter answers (10 x 201, then 429)
+  POST https://localhost:5443/api/bookings [429 Too Many Requests, 1.08kB, 7ms]
+  √  11th booking from the same user: 429
+  √  Clear message, retryAfterSeconds and Retry-After header
+  √  Policy header advertises 10 per 15 minutes
+
+└ Another user can still book (limit is per user, not per IP) -> 201
+  POST https://localhost:5443/api/bookings [201 Created, 1.86kB, 11ms]
+  √  Status is 201
+
+└ Wrong passwords until the login limiter answers (then 429)
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 343ms]
+  √  Failed login 1: 401
+
+Attempting to set next request to Wrong passwords until the login limiter answers (then 429)
+
+└ Wrong passwords until the login limiter answers (then 429)
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 342ms]
+  √  Failed login 2: 401
+
+Attempting to set next request to Wrong passwords until the login limiter answers (then 429)
+
+└ Wrong passwords until the login limiter answers (then 429)
+  POST https://localhost:5443/api/auth/login [401 Unauthorized, 985B, 341ms]
+  √  Failed login 3: 401
+
+Attempting to set next request to Wrong passwords until the login limiter answers (then 429)
+
+└ Wrong passwords until the login limiter answers (then 429)
+  POST https://localhost:5443/api/auth/login [429 Too Many Requests, 1.08kB, 8ms]
+  √  Limit reached: 429
+  √  Clear message, retryAfterSeconds and Retry-After header
+  √  Policy header advertises 10 failures per 15 minutes
+
+└ Correct password from the blocked IP -> 429 (no token)
+  POST https://localhost:5443/api/auth/login [429 Too Many Requests, 1.08kB, 6ms]
+  √  Status is 429
+  √  No token issued
 
 ┌─────────────────────────┬───────────────────┬───────────────────┐
 │                         │          executed │            failed │
 ├─────────────────────────┼───────────────────┼───────────────────┤
 │              iterations │                 1 │                 0 │
 ├─────────────────────────┼───────────────────┼───────────────────┤
-│                requests │                91 │                 0 │
+│                requests │               110 │                 0 │
 ├─────────────────────────┼───────────────────┼───────────────────┤
-│            test-scripts │                91 │                 0 │
+│            test-scripts │               110 │                 0 │
 ├─────────────────────────┼───────────────────┼───────────────────┤
-│      prerequest-scripts │                 3 │                 0 │
+│      prerequest-scripts │                 9 │                 0 │
 ├─────────────────────────┼───────────────────┼───────────────────┤
-│              assertions │               172 │                 0 │
+│              assertions │               196 │                 0 │
 ├─────────────────────────┴───────────────────┴───────────────────┤
-│ total run duration: 16.5s                                       │
+│ total run duration: 18.3s                                       │
 ├─────────────────────────────────────────────────────────────────┤
-│ total data received: 70.6kB (approx)                            │
+│ total data received: 80.94kB (approx)                           │
 ├─────────────────────────────────────────────────────────────────┤
-│ average response time: 98ms [min: 9ms, max: 977ms, s.d.: 165ms] │
+│ average response time: 82ms [min: 4ms, max: 402ms, s.d.: 139ms] │
 └─────────────────────────────────────────────────────────────────┘
 
 Reports written to postman\reports

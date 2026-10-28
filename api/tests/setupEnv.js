@@ -2,7 +2,7 @@
  * Runs before every test file (see setupFiles in vitest.config.mjs).
  * Points the app at a SEPARATE test database so tests never touch real
  * data, and raises the rate limits so the suite isn't throttled by itself
- * (the limiter behaviour has its own dedicated test in security.test.js).
+ * (rateLimits.test.js puts the real limits back to test the real limiters).
  */
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET_TEST || 'test-secret-that-is-long-enough-for-the-32-char-minimum';
