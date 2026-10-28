@@ -14,7 +14,7 @@ RUN npm ci --ignore-scripts
 COPY . .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 USER root
 # Patch the base image's OS packages (Trivy flagged outdated curl, expat,
 # pcre2, libxml2 ...) and add openssl for the self-signed certificate.
